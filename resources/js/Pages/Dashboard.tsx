@@ -26,15 +26,14 @@ type Transaction = {
     currency: string;
     type: 'buy' | 'sell';
     total: string;
-    status: string;
 };
 
 // Data Dummy (Nanti diganti data dari Database via Props)
 const dummyTransactions: Transaction[] = [
-    { id: 1, code: 'TRX-001', date: '10:30 AM', customer: 'Budi Santoso', currency: 'USD', type: 'buy', total: 'Rp 15.000.000', status: 'Success' },
-    { id: 2, code: 'TRX-002', date: '11:15 AM', customer: 'Siti Aminah', currency: 'SGD', type: 'sell', total: 'Rp 5.400.000', status: 'Success' },
-    { id: 3, code: 'TRX-003', date: '13:00 PM', customer: 'John Doe', currency: 'USD', type: 'buy', total: 'Rp 1.500.000', status: 'Pending' },
-    { id: 4, code: 'TRX-004', date: '14:20 PM', customer: 'PT Maju Mundur', currency: 'EUR', type: 'sell', total: 'Rp 25.000.000', status: 'Success' },
+    { id: 1, code: 'TRX-001', date: '10:30 AM', customer: 'Budi Santoso', currency: 'USD', type: 'buy', total: 'Rp 15.000.000' },
+    { id: 2, code: 'TRX-002', date: '11:15 AM', customer: 'Siti Aminah', currency: 'SGD', type: 'sell', total: 'Rp 5.400.000'},
+    { id: 3, code: 'TRX-003', date: '13:00 PM', customer: 'John Doe', currency: 'USD', type: 'buy', total: 'Rp 1.500.000'},
+    { id: 4, code: 'TRX-004', date: '14:20 PM', customer: 'PT Maju Mundur', currency: 'EUR', type: 'sell', total: 'Rp 25.000.000'},
 ];
 
 export default function Dashboard() {
@@ -175,7 +174,6 @@ export default function Dashboard() {
                                         <th className="px-4 py-3">Valas</th>
                                         <th className="px-4 py-3">Jenis</th>
                                         <th className="px-4 py-3 text-right">Total (IDR)</th>
-                                        <th className="px-4 py-3 text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -197,11 +195,6 @@ export default function Dashboard() {
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-semibold">
                                                     {trx.total}
-                                                </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
-                                                        {trx.status}
-                                                    </span>
                                                 </td>
                                             </tr>
                                         ))
