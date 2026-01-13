@@ -14,7 +14,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/transaksi', function () {
-    return Inertia::render('Transaksi');
+    return Inertia::render('Transaksi/Index');
 })->middleware(['auth', 'verified'])->name('transaksi');
 
 Route::middleware('auth')->group(function () {
