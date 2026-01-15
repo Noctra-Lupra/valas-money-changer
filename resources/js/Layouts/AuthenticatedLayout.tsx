@@ -10,12 +10,13 @@ import {
     BookAlert,
     Settings,
     GalleryVerticalEnd,
-    History
+    History,
+    LogOut
 } from 'lucide-react';
 import { PropsWithChildren, ReactNode } from 'react';
 import { Toaster } from "sonner";
 import { Badge } from '@/Components/ui/badge';
-import { Button } from '@/Components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -43,7 +44,7 @@ export default function AuthenticatedLayout({
 
     return (
         <>
-            <Toaster richColors position="top-center" />
+            <Toaster position="bottom-right" />
             <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
                 <div className="hidden border-r bg-muted/40 md:block sticky top-0 h-screen">
                     <div className="flex h-full max-h-screen flex-col gap-2">
@@ -79,27 +80,30 @@ export default function AuthenticatedLayout({
                                             <ArrowLeftRight className="h-4 w-4" />
                                             Transaksi
                                         </NavLink>
-                                        <Link
-                                            href="#"
+                                        <NavLink
+                                            href={route('stok-valas')}
+                                            active={route().current('stok-valas')}
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                                         >
                                             <Banknote className="h-4 w-4" />
                                             Stok Valas
-                                        </Link>
-                                        <Link
-                                            href="#"
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('laporan')}
+                                            active={route().current('laporan')}
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                                         >
                                             <BookAlert className="h-4 w-4" />
                                             Laporan
-                                        </Link>
-                                        <Link
-                                            href="#"
+                                        </NavLink>
+                                        <NavLink
+                                            href={route('settings')}
+                                            active={route().current('settings')}
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                                         >
                                             <Settings className="h-4 w-4" />
                                             Setting
-                                        </Link>
+                                        </NavLink>
                                         <Link
                                             href="#"
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -107,6 +111,14 @@ export default function AuthenticatedLayout({
                                             <GalleryVerticalEnd className="h-4 w-4" />
                                             Riwayat dan Nota
                                         </Link>
+                                        {/* <NavLink
+                                            href={route('operational')}
+                                            active={route().current('operational')}
+                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                                        >
+                                            <Users className="h-4 w-4" />
+                                            Kas dan Biaya
+                                        </NavLink> */}
                                         <Link
                                             href="#"
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -163,8 +175,9 @@ export default function AuthenticatedLayout({
                                             href={route('logout')}
                                             method="post"
                                             as="button"
-                                            className="w-full text-left"
+                                            className="w-full text-left text-red-600"
                                         >
+                                            <LogOut className="inline mr-2 h-4 w-4 text-red" />
                                             Log Out
                                         </Link>
                                     </DropdownMenuItem>
