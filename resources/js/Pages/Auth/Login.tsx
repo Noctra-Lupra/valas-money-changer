@@ -104,11 +104,11 @@ export default function Login({
                     <Button className="ms-4 mr-3" disabled={processing}>
                         Log in
                     </Button>
-                    <Link href={route('register')}>
+                    {/* <Link href={route('register')}>
                         <Button>
                             Register
                         </Button>
-                    </Link>
+                    </Link> */}
                 </div>
             </form>
         </GuestLayout>
