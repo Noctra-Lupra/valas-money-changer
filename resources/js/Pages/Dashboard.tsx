@@ -17,7 +17,8 @@ import {
     ArrowDownLeft,
 } from 'lucide-react';
 
-// data dummy untuk transaksi
+import { PageProps, FinancialAccount } from '@/types';
+
 type Transaction = {
     id: number;
     code: string;
@@ -28,23 +29,42 @@ type Transaction = {
     total: string;
 };
 
-// Data Dummy (Nanti diganti data dari Database via Props)
+// Data Dummy
 const dummyTransactions: Transaction[] = [
     { id: 1, code: 'TRX-001', date: '10:30 AM', customer: 'Budi Santoso', currency: 'USD', type: 'buy', total: 'Rp 15.000.000' },
-    { id: 2, code: 'TRX-002', date: '11:15 AM', customer: 'Siti Aminah', currency: 'SGD', type: 'sell', total: 'Rp 5.400.000'},
-    { id: 3, code: 'TRX-003', date: '13:00 PM', customer: 'John Doe', currency: 'USD', type: 'buy', total: 'Rp 1.500.000'},
-    { id: 4, code: 'TRX-004', date: '14:20 PM', customer: 'PT Maju Mundur', currency: 'EUR', type: 'sell', total: 'Rp 25.000.000'},
+    { id: 2, code: 'TRX-002', date: '11:15 AM', customer: 'Siti Aminah', currency: 'SGD', type: 'sell', total: 'Rp 5.400.000' },
+    { id: 3, code: 'TRX-003', date: '13:00 PM', customer: 'John Doe', currency: 'USD', type: 'buy', total: 'Rp 1.500.000' },
+    { id: 4, code: 'TRX-004', date: '14:20 PM', customer: 'PT Maju Mundur', currency: 'EUR', type: 'sell', total: 'Rp 25.000.000' },
 ];
 
-export default function Dashboard() {
-    // State untuk Filter Buy/Sell
+export default function Dashboard({ auth, financialAccounts = [] }: PageProps<{ financialAccounts: FinancialAccount[] }>) {
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
-    // Logic Filter
     const filteredTransactions = dummyTransactions.filter((trx) => {
         if (filterType === 'all') return true;
         return trx.type === filterType;
     });
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value);
+    };
+
+    const cashBalance = financialAccounts
+        .filter(acc => acc.type === 'cash')
+        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+
+    const bcaBalance = financialAccounts
+        .filter(acc => acc.type.toLowerCase().includes('bca'))
+        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+
+    const mandiriBalance = financialAccounts
+        .filter(acc => acc.type.toLowerCase().includes('mandiri'))
+        .reduce((sum, acc) => sum + Number(acc.balance), 0);
 
     return (
         <AuthenticatedLayout
@@ -71,34 +91,34 @@ export default function Dashboard() {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp.100.000.000</div>
+                            <div className="text-2xl font-bold">{formatCurrency(cashBalance)}</div>
                         </CardContent>
                     </Card>
                     <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-800'>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Saldo BCA</CardTitle>
+                            <CardTitle className="text-sm font-medium">Saldo BCA Awal</CardTitle>
                             <CreditCard className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp.100.000.000</div>
+                            <div className="text-2xl font-bold">{formatCurrency(bcaBalance)}</div>
                         </CardContent>
                     </Card>
                     <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-800'>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Saldo Mandiri</CardTitle>
+                            <CardTitle className="text-sm font-medium">Saldo Mandiri Awal</CardTitle>
                             <CreditCard className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp.100.000.000</div>
+                            <div className="text-2xl font-bold">{formatCurrency(mandiriBalance)}</div>
                         </CardContent>
                     </Card>
                     <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-800'>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+                            <CardTitle className="text-sm font-medium">Grand Total Awal/Kemarin</CardTitle>
                             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp.100.000.000</div>
+                            <div className="text-2xl font-bold">Rp 0</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -136,8 +156,8 @@ export default function Dashboard() {
                             <button
                                 onClick={() => setFilterType('all')}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${filterType === 'all'
-                                        ? 'bg-white shadow text-gray-900 dark:bg-zinc-700 dark:text-white'
-                                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
+                                    ? 'bg-white shadow text-gray-900 dark:bg-zinc-700 dark:text-white'
+                                    : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
                                     }`}
                             >
                                 All
@@ -145,8 +165,8 @@ export default function Dashboard() {
                             <button
                                 onClick={() => setFilterType('buy')}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${filterType === 'buy'
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'text-gray-500 hover:text-green-600'
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    : 'text-gray-500 hover:text-green-600'
                                     }`}
                             >
                                 <ArrowDownLeft className="w-3 h-3" /> Buy
@@ -154,8 +174,8 @@ export default function Dashboard() {
                             <button
                                 onClick={() => setFilterType('sell')}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${filterType === 'sell'
-                                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                        : 'text-gray-500 hover:text-orange-600'
+                                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                    : 'text-gray-500 hover:text-orange-600'
                                     }`}
                             >
                                 <ArrowUpRight className="w-3 h-3" /> Sell
@@ -186,8 +206,8 @@ export default function Dashboard() {
                                                 <td className="px-4 py-3 font-bold">{trx.currency}</td>
                                                 <td className="px-4 py-3">
                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${trx.type === 'buy'
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                                                         }`}>
                                                         {trx.type === 'buy' ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                                                         {trx.type.toUpperCase()}
