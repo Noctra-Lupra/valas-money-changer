@@ -24,18 +24,18 @@ import { Separator } from '@/Components/ui/separator';
 import { Printer, Save, X } from 'lucide-react';
 
 const currencies = [
-    { id: 1, code: 'USD', buy_rate: 15000, sell_rate: 15200 },
-    { id: 2, code: 'SGD', buy_rate: 11500, sell_rate: 11650 },
-    { id: 3, code: 'EUR', buy_rate: 16200, sell_rate: 16400 },
-    { id: 4, code: 'MYR', buy_rate: 3400, sell_rate: 3500 },
+    { id: 1, code: 'USD' },
+    { id: 2, code: 'SGD' },
+    { id: 3, code: 'EUR' },
+    { id: 4, code: 'MYR' },
 ];
 
 export default function Transaksi() {
     const [selectedCurrency, setSelectedCurrency] = useState(currencies[0]);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
-
+    
     const [amount, setAmount] = useState<number | string>('');
-    const [customRate, setCustomRate] = useState<number | string>(currencies[0].buy_rate);
+    const [customRate, setCustomRate] = useState<number | string>(''); 
     const [total, setTotal] = useState<number>(0);
 
     const { data, setData, reset } = useForm({
@@ -49,8 +49,7 @@ export default function Transaksi() {
     });
 
     useEffect(() => {
-        const defaultRate = mode === 'buy' ? selectedCurrency.buy_rate : selectedCurrency.sell_rate;
-        setCustomRate(defaultRate);
+        setCustomRate('');
     }, [selectedCurrency, mode]);
 
     useEffect(() => {
@@ -81,7 +80,7 @@ export default function Transaksi() {
     const handleReset = () => {
         reset();
         setAmount('');
-        setCustomRate(mode === 'buy' ? selectedCurrency.buy_rate : selectedCurrency.sell_rate);
+        setCustomRate(''); 
         setTotal(0);
     };
 
@@ -207,6 +206,7 @@ export default function Transaksi() {
                                             className="h-14 text-2xl font-bold text-center border-blue-200 focus:border-blue-500"
                                             value={formatNumber(customRate)}
                                             onChange={(e) => setCustomRate(e.target.value.replace(/\./g, ''))}
+                                            placeholder='0'
                                         />
                                     </div>
                                 </div>
