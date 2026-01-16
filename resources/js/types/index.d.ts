@@ -28,3 +28,15 @@ export type PageProps<
         user: User;
     };
 };
+
+export interface Currency {
+    id: number;
+    code: string;
+    name: string;
+    variant: string;
+    stock_amount: number;
+    average_rate: number;
+    created_at: string;
+    updated_at: string;
+}
+
