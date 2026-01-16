@@ -11,7 +11,7 @@ import {
 } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
-import { Button } from '@/Components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import {
     Select,
@@ -20,27 +20,41 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/Components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/Components/ui/popover";
 import { Separator } from '@/Components/ui/separator';
-import { Printer, Save, X } from 'lucide-react';
+import { Check, ChevronsUpDown, Printer, Save, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { PageProps, Currency } from '@/types';
+import { toast } from 'sonner';
 
-const currencies = [
-    { id: 1, code: 'USD' },
-    { id: 2, code: 'SGD' },
-    { id: 3, code: 'EUR' },
-    { id: 4, code: 'MYR' },
-];
+interface Props {
+    currencies: Currency[];
+}
 
-export default function Transaksi() {
-    const [selectedCurrency, setSelectedCurrency] = useState(currencies[0]);
+export default function Transaksi({ currencies }: Props) {
+    const [selectedCurrency, setSelectedCurrency] = useState<Currency>(currencies[0]);
+    const [open, setOpen] = useState(false);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
-    
+
     const [amount, setAmount] = useState<number | string>('');
-    const [customRate, setCustomRate] = useState<number | string>(''); 
+    const [customRate, setCustomRate] = useState<number | string>('');
     const [total, setTotal] = useState<number>(0);
 
     const { data, setData, reset } = useForm({
         customer_name: '',
-        currency_id: currencies[0].id,
+        currency_id: currencies[0]?.id,
         type: 'buy',
         amount: '',
         rate: '',
@@ -80,13 +94,43 @@ export default function Transaksi() {
     const handleReset = () => {
         reset();
         setAmount('');
-        setCustomRate(''); 
+        setCustomRate('');
         setTotal(0);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        alert("Data dikirim ke server:\n" + JSON.stringify(data, null, 2));
+
+        const payload = {
+            ...data,
+            amount: Number(data.amount),
+            rate: Number(data.rate),
+            total_idr: Number(data.total_idr),
+        };
+
+        import('@inertiajs/react').then(({ router }) => {
+            router.post('/transaksi', payload, {
+                onSuccess: () => {
+                    toast.success("Transaksi Berhasil!");
+                    reset();
+                    setAmount('');
+                    setCustomRate('');
+                    setTotal(0);
+                },
+                onError: (errors) => {
+                    console.log("Errors:", errors);
+                    if (errors.total_idr) {
+                        toast.error("Transaksi Gagal", { description: errors.total_idr });
+                    } else if (errors.amount) {
+                        toast.error("Transaksi Gagal", { description: errors.amount });
+                    } else if (errors.payment_method) {
+                        toast.error("Transaksi Gagal", { description: errors.payment_method });
+                    } else {
+                        toast.error("Terjadi Kesalahan", { description: "Silakan cek kembali inputan anda." });
+                    }
+                }
+            });
+        });
     };
 
     return (
@@ -161,29 +205,61 @@ export default function Transaksi() {
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-zinc-900 p-6 rounded-xl border border-gray-100 dark:border-zinc-800">
                                 <div className="md:col-span-3 space-y-2">
                                     <Label className="text-muted-foreground">Mata Uang</Label>
-                                    <Select
-                                        onValueChange={(val) => {
-                                            const curr = currencies.find((c) => c.code === val);
-                                            if (curr) setSelectedCurrency(curr);
-                                        }}
-                                        defaultValue={selectedCurrency.code}
-                                    >
-                                        <SelectTrigger className="h-14 text-xl font-bold">
-                                            <SelectValue placeholder="Valas" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {currencies.map((curr) => (
-                                                <SelectItem key={curr.id} value={curr.code}>
-                                                    {curr.code}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Popover open={open} onOpenChange={setOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={open}
+                                                className="w-full h-14 justify-between text-xl font-bold"
+                                            >
+                                                {selectedCurrency.code.toUpperCase()}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent
+                                            className="w-[200px] p-0"
+                                            side="bottom"
+                                            align="start"
+                                            avoidCollisions={false}
+                                        >
+                                            <Command>
+                                                <CommandInput placeholder="Cari valas..." className='h-9' />
+                                                <CommandList>
+                                                    <CommandEmpty>Valas tidak ditemukan.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {currencies.map((curr) => (
+                                                            <CommandItem
+                                                                key={curr.id}
+                                                                value={curr.code}
+                                                                className='uppercase'
+                                                                onSelect={(currentValue) => {
+                                                                    const selected = currencies.find((c) => c.code.toLowerCase() === currentValue.toLowerCase());
+                                                                    if (selected) {
+                                                                        setSelectedCurrency(selected);
+                                                                        setOpen(false);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selectedCurrency.code === curr.code ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {curr.code}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
 
                                 <div className="md:col-span-9 flex items-end gap-3">
                                     <div className="flex-1 space-y-2">
-                                        <Label className="text-muted-foreground">Jumlah ({selectedCurrency.code})</Label>
+                                        <Label className="text-muted-foreground">Jumlah ({selectedCurrency.code.toUpperCase()})</Label>
                                         <Input
                                             type="text"
                                             placeholder="0"
