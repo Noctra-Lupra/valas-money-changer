@@ -43,8 +43,6 @@ import ResetPasswordForm from './Partials/ResetPasswordForm';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import { toast } from 'sonner';
 
-
-// DUMMY DATA VALAS
 const currencies = [
     { id: 1, code: 'USD', name: 'Dollar Amerika', stock: 1500, avg_rate: 15100 },
     { id: 2, code: 'SGD', name: 'Dollar Singapura', stock: 4000, avg_rate: 11550 },
@@ -53,7 +51,6 @@ const currencies = [
 export default function SettingIndex({ auth, users = [], financialAccounts = [] }: PageProps<{ users: User[], financialAccounts: FinancialAccount[] }>) {
     const [activeTab, setActiveTab] = useState('financial');
 
-    // FINANCIAL FORM
     const { data: financialData, setData: setFinancialData, put: putFinancial, processing: processingFinancial } = useForm({
         accounts: financialAccounts.length > 0 ? financialAccounts.map(acc => ({
             type: acc.type,
@@ -88,6 +85,7 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [] 
 
     const [resetUser, setResetUser] = useState<User | null>(null);
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
+
 
     const formatNumber = (val: number | string) => {
         if (!val) return '';
