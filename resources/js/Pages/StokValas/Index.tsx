@@ -34,53 +34,58 @@ import {
     DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu"
 import { Button } from '@/Components/ui/button';
-import { 
-    Search, 
-    Package, 
-    TrendingUp, 
-    RefreshCw, 
-    AlertCircle, 
-    Plus, 
-    MoreHorizontal, 
-    Pencil, 
-    Trash2 
+import {
+    Search,
+    Package,
+    TrendingUp,
+    RefreshCw,
+    AlertCircle,
+    Plus,
+    MoreHorizontal,
+    Pencil,
+    Trash2
 } from 'lucide-react';
+import { Currency } from '@/types';
 
 type StockItem = {
     id: number;
     code: string;
     name: string;
-    stock: number;
+    stock_amount: number;
     average_rate: number;
-    last_update: string;
+    updated_at: string;
 };
 
-// DUMMY DATA
-const initialStocks: StockItem[] = [
-    { id: 1, code: 'USD', name: 'Dollar Amerika', stock: 1500, average_rate: 15100, last_update: '10:30 AM' },
-    { id: 2, code: 'USD', name: 'Dollar Amerika', stock: 200, average_rate: 14800, last_update: 'Kemarin' },
-    { id: 3, code: 'USD', name: 'Dollar Amerika', stock: 50, average_rate: 15000, last_update: '09:00 AM' },
-    { id: 4, code: 'SGD', name: 'Dollar Singapura', stock: 4000, average_rate: 11550, last_update: '11:15 AM' },
-    { id: 5, code: 'EUR', name: 'Euro', stock: 0, average_rate: 0, last_update: '2 Hari lalu' },
-    { id: 6, code: 'MYR', name: 'Ringgit Malaysia', stock: 10500, average_rate: 3450, last_update: '10:00 AM' },
-];
+interface Props {
+    stocks: Currency[];
+}
 
-export default function StockValas() {
+export default function StockValas({ stocks }: Props) {
     const [search, setSearch] = useState('');
     const [isAddOpen, setIsAddOpen] = useState(false);
 
     const filteredStocks = useMemo(() => {
-        return initialStocks.filter((item) =>
+        return stocks.filter((item) =>
             item.code.toLowerCase().includes(search.toLowerCase()) ||
             item.name.toLowerCase().includes(search.toLowerCase())
         );
-    }, [search]);
+    }, [search, stocks]);
 
-    const totalValuation = filteredStocks.reduce((acc, item) => acc + (item.stock * item.average_rate), 0);
-    const totalSheets = filteredStocks.reduce((acc, item) => acc + item.stock, 0);
+    const totalValuation = filteredStocks.reduce((acc, item) => acc + (Number(item.stock_amount) * Number(item.average_rate)), 0);
+    const totalSheets = filteredStocks.reduce((acc, item) => acc + Number(item.stock_amount), 0);
 
     const formatIDR = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
     const formatNum = (val: number) => new Intl.NumberFormat('id-ID').format(val);
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
+
+        if (isToday) return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        if (isYesterday) return 'Kemarin';
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    };
 
     const handleSaveNew = (e: React.FormEvent) => {
         e.preventDefault();
@@ -123,16 +128,7 @@ export default function StockValas() {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Varian Valas</CardTitle>
-                            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{filteredStocks.length}</div>
-                            <p className="text-xs text-muted-foreground">Jenis mata uang & kondisi</p>
-                        </CardContent>
-                    </Card>
+
                 </div>
 
                 <Card className="shadow-md">
@@ -152,7 +148,7 @@ export default function StockValas() {
                                 />
                             </div>
 
-                            <Button 
+                            <Button
                                 className="bg-blue-600 hover:bg-blue-700"
                                 onClick={() => setIsAddOpen(true)}
                             >
@@ -218,23 +214,23 @@ export default function StockValas() {
                                         filteredStocks.map((item) => (
                                             <TableRow key={item.id} className="hover:bg-gray-50 dark:hover:bg-zinc-900/50">
                                                 <TableCell className="font-bold font-mono text-base">
-                                                    {item.code}
+                                                    {item.code.toUpperCase()}
                                                 </TableCell>
                                                 <TableCell className="text-muted-foreground">
                                                     {item.name}
                                                 </TableCell>
                                                 <TableCell className="text-right font-semibold text-base">
-                                                    {formatNum(item.stock)}
+                                                    {formatNum(item.stock_amount)}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium">
-                                                    {item.stock > 0 ? formatNum(item.average_rate) : '-'}
+                                                    {item.stock_amount > 0 ? formatNum(item.average_rate) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right font-medium text-green-700 dark:text-green-400">
-                                                    {item.stock > 0 ? formatIDR(item.stock * item.average_rate) : '-'}
+                                                    {item.stock_amount > 0 ? formatIDR(item.stock_amount * item.average_rate) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {item.stock > 0 ? (
-                                                        <span className="text-xs text-muted-foreground">{item.last_update}</span>
+                                                    {item.stock_amount > 0 ? (
+                                                        <span className="text-xs text-muted-foreground">{formatDate(item.updated_at)}</span>
                                                     ) : (
                                                         <span className="text-[15px] text-red-500 font-bold">Habis</span>
                                                     )}
