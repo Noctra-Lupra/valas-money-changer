@@ -13,13 +13,10 @@ Route::get('/', function () {
 
 Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/transaksi', function () {
-    return Inertia::render('Transaksi/Index');
-})->middleware(['auth', 'verified'])->name('transaksi');
+Route::get('/transaksi', [\App\Http\Controllers\TransactionController::class, 'index'])->middleware(['auth', 'verified'])->name('transaksi');
+Route::post('/transaksi', [\App\Http\Controllers\TransactionController::class, 'store'])->middleware(['auth', 'verified']);
 
-Route::get('/stok-valas', function () {
-    return Inertia::render('StokValas/Index');
-})->middleware(['auth', 'verified'])->name('stok-valas');
+Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
 
 Route::get('/operational', function () {
     return Inertia::render('Operational/Index');
