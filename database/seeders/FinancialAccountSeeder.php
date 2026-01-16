@@ -14,31 +14,31 @@ class FinancialAccountSeeder extends Seeder
                 'account_name' => 'CASH',
                 'account_number' => null, 
                 'type' => 'cash', 
-                'balance' => 100000000, 
+                'balance' => 0, 
             ],
             [
                 'account_name' => 'BCA(1)',
                 'account_number' => '1234567890',
                 'type' => 'bca',
-                'balance' => 400000000,
+                'balance' => 0,
             ],
             [
                 'account_name' => 'BCA(2)',
                 'account_number' => '0987654321',
                 'type' => 'bca2',
-                'balance' => 100000000,
+                'balance' => 0,
             ],
             [
                 'account_name' => 'MANDIRI(1)',
                 'account_number' => '111000222333',
                 'type' => 'mandiri',
-                'balance' => 80000000,
+                'balance' => 0,
             ],
             [
                 'account_name' => 'MANDIRI(2)',
                 'account_number' => '444555666777',
                 'type' => 'mandiri2', 
-                'balance' => 20000000,
+                'balance' => 0,
             ],
         ];
 
