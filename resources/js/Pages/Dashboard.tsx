@@ -29,18 +29,11 @@ type Transaction = {
     total: string;
 };
 
-// Data Dummy
-const dummyTransactions: Transaction[] = [
-    { id: 1, code: 'TRX-001', date: '10:30 AM', customer: 'Budi Santoso', currency: 'USD', type: 'buy', total: 'Rp 15.000.000' },
-    { id: 2, code: 'TRX-002', date: '11:15 AM', customer: 'Siti Aminah', currency: 'SGD', type: 'sell', total: 'Rp 5.400.000' },
-    { id: 3, code: 'TRX-003', date: '13:00 PM', customer: 'John Doe', currency: 'USD', type: 'buy', total: 'Rp 1.500.000' },
-    { id: 4, code: 'TRX-004', date: '14:20 PM', customer: 'PT Maju Mundur', currency: 'EUR', type: 'sell', total: 'Rp 25.000.000' },
-];
 
-export default function Dashboard({ auth, financialAccounts = [] }: PageProps<{ financialAccounts: FinancialAccount[] }>) {
+export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [] }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[] }>) {
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
-    const filteredTransactions = dummyTransactions.filter((trx) => {
+    const filteredTransactions = recentTransactions.filter((trx) => {
         if (filterType === 'all') return true;
         return trx.type === filterType;
     });
@@ -53,6 +46,36 @@ export default function Dashboard({ auth, financialAccounts = [] }: PageProps<{ 
             maximumFractionDigits: 0,
         }).format(value);
     };
+
+    const formatTitleCase = (str: string) => {
+        if (!str) return '';
+        return str
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    const formatWIB = (dateString: string) => {
+        if (!dateString) return '-';
+
+        const date = new Date(dateString);
+
+        if (isNaN(date.getTime())) {
+            return '-';
+        }
+
+        return new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            // day: '2-digit',
+            // month: 'short',
+            // year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
+    };
+
+
 
     const cashBalance = financialAccounts
         .filter(acc => acc.type === 'cash')
@@ -201,9 +224,9 @@ export default function Dashboard({ auth, financialAccounts = [] }: PageProps<{ 
                                         filteredTransactions.map((trx) => (
                                             <tr key={trx.id} className="border-b dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                                                 <td className="px-4 py-3 font-medium">{trx.code}</td>
-                                                <td className="px-4 py-3 text-gray-500">{trx.date}</td>
-                                                <td className="px-4 py-3">{trx.customer}</td>
-                                                <td className="px-4 py-3 font-bold">{trx.currency}</td>
+                                                <td className="px-4 py-3 text-gray-500">{formatWIB(trx.date)}</td>
+                                                <td className="px-4 py-3">{formatTitleCase(trx.customer)}</td>
+                                                <td className="px-4 py-3 font-bold">{trx.currency.toUpperCase()}</td>
                                                 <td className="px-4 py-3">
                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${trx.type === 'buy'
                                                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
