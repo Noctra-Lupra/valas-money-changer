@@ -40,3 +40,39 @@ export interface Currency {
     updated_at: string;
 }
 
+
+export interface TransactionHistory {
+    id: number;
+    formatted_time: string;
+    invoice_number: string;
+    transaction_type: string;
+    customer: string;
+    currency_code: string;
+    rate: string | number;
+    payment_method: string;
+    total_idr: number;
+    user_name: string;
+    amount_valas: number;
+}
+
+export interface ReportData {
+    saldo_awal: {
+        cash: number;
+        bca: number;
+        mandiri: number;
+    };
+    mutations: {
+        salesCash: number;
+        buyCash: number;
+        salesBca: number;
+        buyBca: number;
+        salesMandiri: number;
+        buyMandiri: number;
+    };
+    totals: {
+        buy: number;
+        sales: number;
+        asset_valas: number;
+    };
+    transactions: TransactionHistory[];
+}

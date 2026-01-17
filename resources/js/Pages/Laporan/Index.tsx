@@ -1,7 +1,7 @@
-import { PageProps, FinancialAccount } from '@/types';
+import { PageProps, ReportData } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     Card,
     CardContent,
@@ -50,80 +50,18 @@ import {
     Banknote,
 } from 'lucide-react';
 
-interface TransactionHistory {
-    id: number;
-    formatted_time: string;
-    invoice_number: string;
-    transaction_type: string;
-    customer: string;
-    currency_code: string;
-    rate: string | number;
-    payment_method: string;
-    total_idr: number;
-    user_name: string;
-    amount_valas: number;
-}
 
-export default function ReportIndex({ auth, financialAccounts = [], totalAssetValas = 0, transactions = [] }: PageProps<{ financialAccounts: FinancialAccount[], totalAssetValas: number, transactions: TransactionHistory[] }>) {
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+export default function ReportIndex({ auth, date, reportData }: PageProps<{ date: string, reportData: ReportData }>) {
 
-    const saldoAwalCash = useMemo(() =>
-        financialAccounts.filter(acc => acc.type === 'cash').reduce((sum, acc) => sum + Number(acc.balance), 0),
-        [financialAccounts]);
-
-    const saldoAwalBca = useMemo(() =>
-        financialAccounts.filter(acc => acc.type.toLowerCase().includes('bca')).reduce((sum, acc) => sum + Number(acc.balance), 0),
-        [financialAccounts]);
-
-    const saldoAwalMandiri = useMemo(() =>
-        financialAccounts.filter(acc => acc.type.toLowerCase().includes('mandiri')).reduce((sum, acc) => sum + Number(acc.balance), 0),
-        [financialAccounts]);
-
-    const dailyMutations = useMemo(() => {
-        let salesCash = 0, buyCash = 0;
-        let salesBca = 0, buyBca = 0;
-        let salesMandiri = 0, buyMandiri = 0;
-
-        transactions.forEach(trx => {
-            const nominal = Number(trx.total_idr);
-            const method = trx.payment_method.toLowerCase();
-            const type = trx.transaction_type; 
-
-            if (method === 'cash') {
-                if (type === 'sell') salesCash += nominal;
-                if (type === 'buy') buyCash += nominal;   
-            } else if (method.includes('bca')) {
-                if (type === 'sell') salesBca += nominal;
-                if (type === 'buy') buyBca += nominal;
-            } else if (method.includes('mandiri')) {
-                if (type === 'sell') salesMandiri += nominal;
-                if (type === 'buy') buyMandiri += nominal;
-            }
-        });
-
-        return { salesCash, buyCash, salesBca, buyBca, salesMandiri, buyMandiri };
-    }, [transactions]);
+    const { saldo_awal, mutations, totals, transactions } = reportData;
 
     const [summary, setSummary] = useState({
-        saldo_awal: saldoAwalCash,
-        total_penjualan_tunai: dailyMutations.salesCash,
-        total_pembelian_tunai: dailyMutations.buyCash,
         total_pemasukan_tunai: 0,
         total_pengeluaran_tunai: 0,
-
-        saldo_awal_bca: saldoAwalBca,
-        total_penjualan_bca: dailyMutations.salesBca,
-        total_pembelian_bca: dailyMutations.buyBca,
         total_pemasukan_bca: 0,
         total_pengeluaran_bca: 0,
-
-        saldo_awal_mandiri: saldoAwalMandiri,
-        total_penjualan_mandiri: dailyMutations.salesMandiri,
-        total_pembelian_mandiri: dailyMutations.buyMandiri,
         total_pemasukan_mandiri: 0,
         total_pengeluaran_mandiri: 0,
-
-        total_aset_valas: totalAssetValas,
         grand_total_kemarin: 0,
     });
 
@@ -134,24 +72,24 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
         amount: '',
     });
 
-    const totalSemuaPembelian = dailyMutations.buyCash + dailyMutations.buyBca + dailyMutations.buyMandiri;
-    const totalSemuaPenjualan = dailyMutations.salesCash + dailyMutations.salesBca + dailyMutations.salesMandiri;
+    const totalSemuaPembelian = totals.buy;
+    const totalSemuaPenjualan = totals.sales;
 
-    const saldoAkhirKas = (saldoAwalCash || 0)
-        + (dailyMutations.salesCash || 0)
-        - (dailyMutations.buyCash || 0)
+    const saldoAkhirKas = (saldo_awal.cash || 0)
+        + (mutations.salesCash || 0)
+        - (mutations.buyCash || 0)
         + (summary.total_pemasukan_tunai || 0)
         - (summary.total_pengeluaran_tunai || 0);
 
-    const saldoAkhirBca = (saldoAwalBca || 0)
-        + (dailyMutations.salesBca || 0)
-        - (dailyMutations.buyBca || 0)
+    const saldoAkhirBca = (saldo_awal.bca || 0)
+        + (mutations.salesBca || 0)
+        - (mutations.buyBca || 0)
         + (summary.total_pemasukan_bca || 0)
         - (summary.total_pengeluaran_bca || 0);
 
-    const saldoAkhirMandiri = (saldoAwalMandiri || 0)
-        + (dailyMutations.salesMandiri || 0)
-        - (dailyMutations.buyMandiri || 0)
+    const saldoAkhirMandiri = (saldo_awal.mandiri || 0)
+        + (mutations.salesMandiri || 0)
+        - (mutations.buyMandiri || 0)
         + (summary.total_pemasukan_mandiri || 0)
         - (summary.total_pengeluaran_mandiri || 0);
 
@@ -160,9 +98,13 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
     const grandTotalHariIni = saldoAkhirKas
         + saldoAkhirBca
         + saldoAkhirMandiri
-        + (summary.total_aset_valas || 0);
+        + (totals.asset_valas || 0);
 
     const profitBersih = grandTotalHariIni - (summary.grand_total_kemarin || 0);
+
+    const handleDateChange = (val: string) => {
+        router.get(route('laporan.index'), { date: val }, { preserveState: true, preserveScroll: true });
+    };
 
     const formatIDR = (val: number | string) => {
         const num = Number(val);
@@ -266,7 +208,7 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
                                     type="date"
                                     className="pl-9 w-full md:w-48 font-semibold"
                                     value={date}
-                                    onChange={(e) => setDate(e.target.value)}
+                                    onChange={(e) => handleDateChange(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -324,14 +266,14 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="flex items-center gap-1"><Landmark className="h-3 w-3" /> Total BCA</span>
-                                    <span className={`font-bold ${((dailyMutations.salesBca || 0) - (dailyMutations.buyBca || 0) + (summary.total_pemasukan_bca || 0) - (summary.total_pengeluaran_bca || 0)) < 0 ? 'text-red-600' : 'text-white'}`}>
-                                        {formatIDR((dailyMutations.salesBca || 0) - (dailyMutations.buyBca || 0) + (summary.total_pemasukan_bca || 0) - (summary.total_pengeluaran_bca || 0))}
+                                    <span className={`font-bold ${((mutations.salesBca || 0) - (mutations.buyBca || 0) + (summary.total_pemasukan_bca || 0) - (summary.total_pengeluaran_bca || 0)) < 0 ? 'text-red-600' : 'text-white/80'}`}>
+                                        {formatIDR((mutations.salesBca || 0) - (mutations.buyBca || 0) + (summary.total_pemasukan_bca || 0) - (summary.total_pengeluaran_bca || 0))}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="flex items-center gap-1"><Landmark className="h-3 w-3" /> Total Mandiri</span>
-                                    <span className={`font-bold ${((dailyMutations.salesMandiri || 0) - (dailyMutations.buyMandiri || 0) + (summary.total_pemasukan_mandiri || 0) - (summary.total_pengeluaran_mandiri || 0)) < 0 ? 'text-red-600' : 'text-white'}`}>
-                                        {formatIDR((dailyMutations.salesMandiri || 0) - (dailyMutations.buyMandiri || 0) + (summary.total_pemasukan_mandiri || 0) - (summary.total_pengeluaran_mandiri || 0))}
+                                    <span className={`font-bold ${((mutations.salesMandiri || 0) - (mutations.buyMandiri || 0) + (summary.total_pemasukan_mandiri || 0) - (summary.total_pengeluaran_mandiri || 0)) < 0 ? 'text-red-600' : 'text-white/80'}`}>
+                                        {formatIDR((mutations.salesMandiri || 0) - (mutations.buyMandiri || 0) + (summary.total_pemasukan_mandiri || 0) - (summary.total_pengeluaran_mandiri || 0))}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -340,7 +282,7 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="flex items-center gap-1">Total Saldo Valas</span>
-                                    <span className=" font-bold">{formatIDR(summary.total_aset_valas)}</span>
+                                    <span className=" font-bold">{formatIDR(totals.asset_valas)}</span>
                                 </div>
                             </div>
 
@@ -429,15 +371,15 @@ export default function ReportIndex({ auth, financialAccounts = [], totalAssetVa
                                 <div className="space-y-1 mb-4 text-sm text-gray-600 dark:text-gray-400">
                                     <div className="flex justify-between">
                                         <span>Cash</span>
-                                        <span className="">{formatIDR(saldoAwalCash)}</span>
+                                        <span className="">{formatIDR(saldo_awal.cash)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>BCA</span>
-                                        <span className="">{formatIDR(saldoAwalBca)}</span>
+                                        <span className="">{formatIDR(saldo_awal.bca)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Mandiri</span>
-                                        <span className="">{formatIDR(saldoAwalMandiri)}</span>
+                                        <span className="">{formatIDR(saldo_awal.mandiri)}</span>
                                     </div>
                                 </div>
                                 <Separator className="mb-4" />
