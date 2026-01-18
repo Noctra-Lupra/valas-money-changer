@@ -34,6 +34,14 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
     const filteredTransactions = recentTransactions.filter((trx) => {
+        const trxDate = new Date(trx.date);
+        const today = new Date();
+        const isToday = trxDate.getDate() === today.getDate() &&
+            trxDate.getMonth() === today.getMonth() &&
+            trxDate.getFullYear() === today.getFullYear();
+
+        if (!isToday) return false;
+
         if (filterType === 'all') return true;
         return trx.type === filterType;
     });
