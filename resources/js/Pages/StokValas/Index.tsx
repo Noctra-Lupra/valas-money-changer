@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import {
     Card,
@@ -46,15 +46,16 @@ import {
     Trash2
 } from 'lucide-react';
 import { Currency } from '@/types';
+import { toast } from 'sonner';
 
-type StockItem = {
-    id: number;
-    code: string;
-    name: string;
-    stock_amount: number;
-    average_rate: number;
-    updated_at: string;
-};
+// type StockItem = {
+//     id: number;
+//     code: string;
+//     name: string;
+//     stock_amount: number;
+//     average_rate: number;
+//     updated_at: string;
+// };
 
 interface Props {
     stocks: Currency[];
@@ -87,10 +88,23 @@ export default function StockValas({ stocks }: Props) {
         return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     };
 
+    const { data, setData, post, processing, reset, errors } = useForm({
+        code: '',
+        name: '',
+    });
+
     const handleSaveNew = (e: React.FormEvent) => {
         e.preventDefault();
-        alert("Simpan Data Baru");
-        setIsAddOpen(false);
+        post(route('stok-valas.store'), {
+            onSuccess: () => {
+                setIsAddOpen(false);
+                reset();
+                toast.success('Valas baru berhasil ditambahkan.');
+            },
+            onError: () => {
+                toast.error('Valas baru gagal ditambahkan.');
+            }
+        });
     }
 
     return (
@@ -105,7 +119,7 @@ export default function StockValas({ stocks }: Props) {
 
             <div className="flex flex-col gap-6 w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                     <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Valuasi Aset</CardTitle>
@@ -149,7 +163,7 @@ export default function StockValas({ stocks }: Props) {
                             </div>
 
                             <Button
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-white/90 hover:bg-white/80"
                                 onClick={() => setIsAddOpen(true)}
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -165,29 +179,35 @@ export default function StockValas({ stocks }: Props) {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <form onSubmit={handleSaveNew}>
-                                        <div className="grid gap-4 py-4">
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label htmlFor="code" className="text-right">
-                                                    Kode
-                                                </Label>
-                                                <Input id="code" placeholder="Misal: JPY" className="col-span-3 uppercase" required />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label htmlFor="name" className="text-right">
-                                                    Nama
-                                                </Label>
-                                                <Input id="name" placeholder="Yen Jepang" className="col-span-3" required />
-                                            </div>
-                                            <div className="grid grid-cols-4 items-center gap-4">
-                                                <Label htmlFor="stock" className="text-right">
-                                                    Stok Awal
-                                                </Label>
-                                                <Input id="stock" type="number" defaultValue="0" className="col-span-3" required />
-                                            </div>
+                                        <div className="grid grid-cols-4 py-2 items-center gap-4">
+                                            <Label htmlFor="code" className="text-right">
+                                                Kode
+                                            </Label>
+                                            <Input
+                                                id="code"
+                                                placeholder="Misal: USD"
+                                                className="col-span-3 uppercase"
+                                                value={data.code}
+                                                onChange={(e) => setData('code', e.target.value)}
+                                                required
+                                            />
                                         </div>
-                                        <DialogFooter>
+                                        <div className="grid grid-cols-4 items-center gap-4">
+                                            <Label htmlFor="name" className="text-right">
+                                                Nama
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                placeholder="Opsional (kosongkan dengan -)"
+                                                className="col-span-3"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <DialogFooter className='mt-5'>
                                             <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Batal</Button>
-                                            <Button type="submit">Simpan Valas</Button>
+                                            <Button type="submit" disabled={processing}>Simpan Valas</Button>
                                         </DialogFooter>
                                     </form>
                                 </DialogContent>
@@ -206,7 +226,6 @@ export default function StockValas({ stocks }: Props) {
                                         <TableHead className="text-right">Rata-rata Modal</TableHead>
                                         <TableHead className="text-right">Total Nilai</TableHead>
                                         <TableHead className="text-center w-[120px]">Last Update</TableHead>
-                                        <TableHead className="text-center w-[50px]">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -234,30 +253,6 @@ export default function StockValas({ stocks }: Props) {
                                                     ) : (
                                                         <span className="text-[15px] text-red-500 font-bold">Habis</span>
                                                     )}
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Open menu</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem>
-                                                                <Pencil className="mr-2 h-4 w-4" /> Edit Data
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <RefreshCw className="mr-2 h-4 w-4" /> Stock Opname
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-red-600">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
                                         ))
