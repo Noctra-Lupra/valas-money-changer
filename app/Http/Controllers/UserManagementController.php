@@ -21,6 +21,7 @@ class UserManagementController extends Controller
         return Inertia::render('Settings/Index', [
             'users' => User::orderBy('id', 'ASC')->get(),
             'financialAccounts' => FinancialAccount::where('is_active', true)->get(),
+            'currencies' => \App\Models\Currencies::all(),
         ]);
     }
 
@@ -95,5 +96,25 @@ class UserManagementController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * Update currency stock and rate.
+     */
+    public function updateStock(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'code' => 'required|string|exists:currencies,code',
+            'stock_amount' => 'required|integer|min:0',
+            'average_rate' => 'required|numeric|min:0',
+        ]);
+
+        \App\Models\Currencies::where('code', $request->code)->update([
+            'stock_amount' => $request->stock_amount,
+            'average_rate' => $request->average_rate,
+            'last_update' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Stok valas berhasil dikoreksi.');
     }
 }

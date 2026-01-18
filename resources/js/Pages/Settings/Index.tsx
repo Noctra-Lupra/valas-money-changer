@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react'; // router added
 import { FormEventHandler, useState } from 'react';
 import {
     Card,
@@ -35,20 +35,31 @@ import {
     Users,
     KeyRound,
     Trash2,
-    AlertTriangle
+    AlertTriangle,
+    Check,
+    ChevronsUpDown
 } from 'lucide-react';
-import { PageProps, User, FinancialAccount } from '@/types';
+import { PageProps, User, FinancialAccount, Currency } from '@/types';
 import CreateUserForm from './Partials/CreateUserForm';
 import ResetPasswordForm from './Partials/ResetPasswordForm';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/Components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/Components/ui/popover"
 
-const currencies = [
-    { id: 1, code: 'USD', name: 'Dollar Amerika', stock: 1500, avg_rate: 15100 },
-    { id: 2, code: 'SGD', name: 'Dollar Singapura', stock: 4000, avg_rate: 11550 },
-];
-
-export default function SettingIndex({ auth, users = [], financialAccounts = [] }: PageProps<{ users: User[], financialAccounts: FinancialAccount[] }>) {
+export default function SettingIndex({ auth, users = [], financialAccounts = [], currencies = [] }: PageProps<{ users: User[], financialAccounts: FinancialAccount[], currencies: Currency[] }>) {
     const [activeTab, setActiveTab] = useState('financial');
 
     const { data: financialData, setData: setFinancialData, put: putFinancial, processing: processingFinancial } = useForm({
@@ -82,6 +93,28 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [] 
     const [selectedValas, setSelectedValas] = useState<string>('');
     const [editStock, setEditStock] = useState<string>('');
     const [editRate, setEditRate] = useState<string>('');
+    const [openCombobox, setOpenCombobox] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleCorrectionSubmit = () => {
+        if (!selectedValas) return;
+        setIsSaving(true);
+        router.put(route('currencies.update-stock'), {
+            code: selectedValas,
+            stock_amount: Number(editStock.replace(/[^0-9]/g, '')),
+            average_rate: Number(editRate.replace(/[^0-9]/g, '')),
+        }, {
+            onSuccess: () => {
+                toast.success('Stok berhasil dikoreksi.');
+                setIsSaving(false);
+            },
+            onError: () => {
+                toast.error('Gagal mengoreksi stok.');
+                setIsSaving(false);
+            },
+            preserveScroll: true
+        });
+    };
 
     const [resetUser, setResetUser] = useState<User | null>(null);
     const [deleteUser, setDeleteUser] = useState<User | null>(null);
@@ -205,25 +238,57 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [] 
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="space-y-2">
+                                <div className="space-y-2 flex flex-col">
                                     <Label>Pilih Mata Uang</Label>
-                                    <Select onValueChange={(val) => {
-                                        const curr = currencies.find(c => c.code === val);
-                                        setSelectedValas(val);
-                                        if (curr) {
-                                            setEditStock(String(curr.stock));
-                                            setEditRate(String(curr.avg_rate));
-                                        }
-                                    }}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Pilih Valas..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {currencies.map(c => (
-                                                <SelectItem key={c.id} value={c.code}>{c.code} - {c.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={openCombobox}
+                                                className="w-full justify-between py-5"
+                                            >
+                                                {selectedValas
+                                                    ? `${currencies.find((c) => c.code === selectedValas)?.code.toUpperCase()}`
+                                                    : "Pilih Valas..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent
+                                            side="bottom"
+                                            align="start"
+                                            avoidCollisions={false}
+                                            className="w-[300px] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Cari valas..." />
+                                                <CommandList>
+                                                    <CommandEmpty>Valas tidak ditemukan.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {currencies.map((framework) => (
+                                                            <CommandItem
+                                                                key={framework.id}
+                                                                value={framework.code}
+                                                                onSelect={(currentValue) => {
+                                                                    setSelectedValas(framework.code);
+                                                                    setEditStock(String(Math.floor(Number(framework.stock_amount))));
+                                                                    setEditRate(String(Math.floor(Number(framework.average_rate))));
+                                                                    setOpenCombobox(false);
+                                                                }}
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selectedValas === framework.code ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {framework.code.toUpperCase()}
+                                                            </CommandItem>
+                                                        ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -246,8 +311,8 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [] 
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button variant="destructive" disabled={!selectedValas}>
-                                    Simpan Koreksi (Log Audit)
+                                <Button variant="destructive" disabled={!selectedValas || isSaving} onClick={handleCorrectionSubmit}>
+                                    {isSaving ? "Menyimpan..." : "Simpan Koreksi (Log Audit)"}
                                 </Button>
                             </CardFooter>
                         </Card>
