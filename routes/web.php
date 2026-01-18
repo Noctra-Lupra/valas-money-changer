@@ -17,6 +17,7 @@ Route::get('/transaksi', [\App\Http\Controllers\TransactionController::class, 'i
 Route::post('/transaksi', [\App\Http\Controllers\TransactionController::class, 'store'])->middleware(['auth', 'verified']);
 
 Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
+Route::post('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'store'])->middleware(['auth', 'verified'])->name('stok-valas.store');
 
 Route::get('/operational', function () {
     return Inertia::render('Operational/Index');
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/users/{user}/password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
     Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
     Route::put('/financial-accounts', [UserManagementController::class, 'updateFinancial'])->name('financial.update');
+    Route::put('/currencies/stock', [UserManagementController::class, 'updateStock'])->name('currencies.update-stock');
 });
 
 
