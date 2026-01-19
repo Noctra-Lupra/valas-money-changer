@@ -104,13 +104,14 @@ export default function AuthenticatedLayout({
                                             <Settings className="h-4 w-4" />
                                             Setting
                                         </NavLink>
-                                        <Link
-                                            href="#"
+                                        <NavLink
+                                            href={route('riwayat.index')}
+                                            active={route().current('riwayat.index')}
                                             className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                                         >
                                             <GalleryVerticalEnd className="h-4 w-4" />
                                             Riwayat dan Nota
-                                        </Link>
+                                        </NavLink>
                                         {/* <NavLink
                                             href={route('operational')}
                                             active={route().current('operational')}
