@@ -25,6 +25,9 @@ Route::get('/operational', function () {
 
 Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->middleware(['auth', 'verified'])->name('laporan');
 
+Route::get('/riwayat', [\App\Http\Controllers\RiwayatController::class, 'index'])->middleware(['auth', 'verified'])->name('riwayat.index');
+Route::get('/riwayat/{transaction}/print', [\App\Http\Controllers\RiwayatController::class, 'print'])->middleware(['auth', 'verified'])->name('riwayat.print');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/settings', [UserManagementController::class, 'index'])->name('settings');
     Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
