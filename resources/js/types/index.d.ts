@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'staff';
 
 export interface User {
@@ -60,6 +59,7 @@ export interface ReportData {
         cash: number;
         bca: number;
         mandiri: number;
+        [key: string]: number;
     };
     mutations: {
         salesCash: number;
@@ -68,6 +68,7 @@ export interface ReportData {
         buyBca: number;
         salesMandiri: number;
         buyMandiri: number;
+        [key: string]: number;
     };
     totals: {
         buy: number;
@@ -75,4 +76,22 @@ export interface ReportData {
         asset_valas: number;
     };
     transactions: TransactionHistory[];
+}
+
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface PaginatedData<T> {
+    data: T[];
+    links: PaginationLink[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
 }
