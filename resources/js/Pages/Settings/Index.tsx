@@ -99,10 +99,16 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
     const handleCorrectionSubmit = () => {
         if (!selectedValas) return;
         setIsSaving(true);
+
+        const parseValue = (val: string) => {
+            const cleanStr = val.replace(/\./g, '').replace(',', '.');
+            return Number(cleanStr) || 0;
+        };
+
         router.put(route('currencies.update-stock'), {
             code: selectedValas,
-            stock_amount: Number(editStock.replace(/[^0-9]/g, '')),
-            average_rate: Number(editRate.replace(/[^0-9]/g, '')),
+            stock_amount: parseValue(editStock),
+            average_rate: parseValue(editRate),
         }, {
             onSuccess: () => {
                 toast.success('Stok berhasil dikoreksi.');
@@ -121,8 +127,25 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
 
 
     const formatNumber = (val: number | string) => {
-        if (!val) return '';
-        return new Intl.NumberFormat('id-ID').format(Number(String(val).replace(/[^0-9]/g, '')));
+        if (!val && val !== 0) return '';
+        const strVal = String(val);
+        const parts = strVal.split(',');
+
+        // Format integer part
+        const integerPart = parts[0].replace(/[^0-9]/g, '');
+        const formattedInteger = new Intl.NumberFormat('id-ID').format(Number(integerPart) || 0);
+
+        if (parts.length > 1) {
+            // Include decimal part
+            const decimalPart = parts[1].replace(/[^0-9]/g, '');
+            return `${formattedInteger},${decimalPart}`;
+        }
+
+        if (strVal.endsWith(',')) {
+            return `${formattedInteger},`;
+        }
+
+        return formattedInteger;
     };
 
     return (
@@ -209,7 +232,7 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
                                             if (acc.type === 'cash') return null;
                                             return (
                                                 <div key={acc.type} className="space-y-2">
-                                                    <Label>{acc.account_name} {acc.account_number && `(${acc.account_number})`}</Label>
+                                                    <Label>{acc.account_name}</Label>
                                                     <Input
                                                         value={formatNumber(acc.balance)}
                                                         onChange={(e) => handleFinancialChange(index, e.target.value)}
@@ -270,8 +293,8 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
                                                                 value={framework.code}
                                                                 onSelect={(currentValue) => {
                                                                     setSelectedValas(framework.code);
-                                                                    setEditStock(String(Math.floor(Number(framework.stock_amount))));
-                                                                    setEditRate(String(Math.floor(Number(framework.average_rate))));
+                                                                    setEditStock(String(Number(framework.stock_amount)).replace('.', ','));
+                                                                    setEditRate(String(Number(framework.average_rate)).replace('.', ','));
                                                                     setOpenCombobox(false);
                                                                 }}
                                                             >

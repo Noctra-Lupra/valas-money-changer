@@ -67,8 +67,14 @@ export default function Transaksi({ currencies }: Props) {
     }, [selectedCurrency, mode]);
 
     useEffect(() => {
-        const numAmount = Number(String(amount).replace(/[^0-9]/g, '')) || 0;
-        const numRate = Number(String(customRate).replace(/[^0-9]/g, '')) || 0;
+        const parseValue = (val: number | string) => {
+            if (!val) return 0;
+            const cleanStr = String(val).replace(/\./g, '').replace(',', '.');
+            return Number(cleanStr) || 0;
+        };
+
+        const numAmount = parseValue(amount);
+        const numRate = parseValue(customRate);
         const hitungTotal = numAmount * numRate;
 
         setTotal(hitungTotal);
@@ -87,8 +93,25 @@ export default function Transaksi({ currencies }: Props) {
         new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
     const formatNumber = (val: number | string) => {
-        if (!val) return '';
-        return new Intl.NumberFormat('id-ID').format(Number(String(val).replace(/[^0-9]/g, '')));
+        if (!val && val !== 0) return '';
+        const strVal = String(val);
+        const parts = strVal.split(',');
+
+        // Format integer part
+        const integerPart = parts[0].replace(/[^0-9]/g, '');
+        const formattedInteger = new Intl.NumberFormat('id-ID').format(Number(integerPart) || 0);
+
+        if (parts.length > 1) {
+            // Include decimal part
+            const decimalPart = parts[1].replace(/[^0-9]/g, '');
+            return `${formattedInteger},${decimalPart}`;
+        }
+
+        if (strVal.endsWith(',')) {
+            return `${formattedInteger},`;
+        }
+
+        return formattedInteger;
     };
 
     const handleReset = () => {
@@ -369,10 +392,10 @@ export default function Transaksi({ currencies }: Props) {
                                         {selectedCurrency.code}
                                     </div>
                                     <div className="w-1/4 py-4 border-r border-black">
-                                        {Number(amount).toLocaleString('id-ID')}
+                                        {formatNumber(amount)}
                                     </div>
                                     <div className="w-1/4 py-4 border-r border-black">
-                                        {Number(customRate).toLocaleString('id-ID')}
+                                        {formatNumber(customRate)}
                                     </div>
                                     <div className="w-1/4 py-4 font-bold">
                                         {formatIDR(total)}
