@@ -25,7 +25,7 @@ class RiwayatController extends Controller
         }
 
         $transactions = $query->OrderBy('id')
-            ->paginate(5)
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Riwayat/Index', [

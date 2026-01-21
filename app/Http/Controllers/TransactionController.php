@@ -69,15 +69,26 @@ class TransactionController extends Controller
         }
 
         if ($validated['type'] === 'buy') {
-            $totalValueOld = $currency->stock_amount * $currency->average_rate;
-            $totalValueNew = $amount * $rate;
-            $totalStockNew = $currency->stock_amount + $amount;
+            $soldQtyToday = Transactions::where('currency_id', $currency->id)
+                ->where('type', 'sell')
+                ->whereDate('created_at', now()->toDateString())
+                ->sum('amount');
 
-            if ($totalStockNew > 0) {
-                $newAverageRate = ($totalValueOld + $totalValueNew) / $totalStockNew;
+            $currentStockValue = $currency->stock_amount * $currency->average_rate;
+            $soldStockValue    = $soldQtyToday * $currency->average_rate; 
+
+            $newPurchaseValue  = $amount * $rate;
+
+            $totalValue = $currentStockValue + $soldStockValue + $newPurchaseValue;
+
+            $totalQtyAccumulated = $currency->stock_amount + $soldQtyToday + $amount;
+
+            if ($totalQtyAccumulated > 0) {
+                $newAverageRate = $totalValue / $totalQtyAccumulated;
                 $currency->average_rate = $newAverageRate;
             }
-            $currency->stock_amount = $totalStockNew;
+
+            $currency->stock_amount += $amount;
             $currency->save();
 
         } else {
