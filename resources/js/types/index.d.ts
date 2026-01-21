@@ -51,7 +51,9 @@ export interface TransactionHistory {
     payment_method: string;
     total_idr: number;
     user_name: string;
+    user_name: string;
     amount_valas: number;
+    is_operational?: boolean;
 }
 
 export interface ReportData {
@@ -76,6 +78,19 @@ export interface ReportData {
         asset_valas: number;
     };
     transactions: TransactionHistory[];
+    ops: {
+        cash_in: number;
+        cash_out: number;
+        bca_in: number;
+        bca_out: number;
+        mandiri_in: number;
+        mandiri_out: number;
+        bca2_net: number;
+        mandiri2_net: number;
+        transfer_from_bank_to_cash: number;
+        transfer_to_bank: number;
+        ghost_adjustment: number;
+    };
 }
 
 export interface PaginationLink {
