@@ -1,3 +1,5 @@
+import { PaginatedData } from '@/types';
+
 export type UserRole = 'admin' | 'staff';
 
 export interface User {
@@ -41,7 +43,7 @@ export interface Currency {
 
 
 export interface TransactionHistory {
-    id: number;
+    id: number | string;
     formatted_time: string;
     invoice_number: string;
     transaction_type: string;
@@ -50,7 +52,6 @@ export interface TransactionHistory {
     rate: string | number;
     payment_method: string;
     total_idr: number;
-    user_name: string;
     user_name: string;
     amount_valas: number;
     is_operational?: boolean;
@@ -77,7 +78,7 @@ export interface ReportData {
         sales: number;
         asset_valas: number;
     };
-    transactions: TransactionHistory[];
+    transactions: PaginatedData<TransactionHistory>;
     ops: {
         cash_in: number;
         cash_out: number;

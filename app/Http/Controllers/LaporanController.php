@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class LaporanController extends Controller
 {
@@ -50,9 +52,9 @@ class LaporanController extends Controller
     public function index(Request $request): Response
     {
         $date = $request->input('date', now()->toDateString());
-        
+
         $financialAccounts = FinancialAccount::where('is_active', true)->get();
-     
+
         $saldoAwalCash = $financialAccounts->where('type', 'cash')->sum('balance');
         $saldoAwalBca = $financialAccounts->whereIn('type', ['bca', 'bca2'])->sum('balance');
         $saldoAwalMandiri = $financialAccounts->whereIn('type', ['mandiri', 'mandiri2'])->sum('balance');
@@ -60,22 +62,25 @@ class LaporanController extends Controller
         $todaysTransactions = Transactions::with(['user', 'currency', 'financialAccount'])
             ->whereDate('created_at', $date)
             ->get();
-     
+
         $opsEntries = \App\Models\OperationalEntry::with('financialAccount')
             ->whereDate('created_at', $date)
             ->get();
 
         $mutations = [
-            'salesCash' => 0, 'buyCash' => 0,
-            'salesBca' => 0, 'buyBca' => 0,
-            'salesMandiri' => 0, 'buyMandiri' => 0,
+            'salesCash' => 0,
+            'buyCash' => 0,
+            'salesBca' => 0,
+            'buyBca' => 0,
+            'salesMandiri' => 0,
+            'buyMandiri' => 0,
         ];
 
         foreach ($todaysTransactions as $trx) {
             $nominal = (float) $trx->total_idr;
             $type = $trx->type;
             $accountType = $trx->financialAccount ? $trx->financialAccount->type : '';
-            
+
             if ($accountType === 'cash') {
                 if ($type === 'sell') $mutations['salesCash'] += $nominal;
                 if ($type === 'buy') $mutations['buyCash'] += $nominal;
@@ -89,40 +94,38 @@ class LaporanController extends Controller
         }
 
         $opsSummary = [
-            'cash_in' => 0, 'cash_out' => 0,
-            'bca_in' => 0, 'bca_out' => 0,
-            'mandiri_in' => 0, 'mandiri_out' => 0,
-            
-            'transfer_from_bank_to_cash' => 0, 
+            'cash_in' => 0,
+            'cash_out' => 0,
+            'bca_in' => 0,
+            'bca_out' => 0,
+            'mandiri_in' => 0,
+            'mandiri_out' => 0,
+
+            'transfer_from_bank_to_cash' => 0,
             'transfer_to_bank' => 0,
-            'ghost_adjustment' => 0, 
+            'ghost_adjustment' => 0,
         ];
 
         foreach ($opsEntries as $op) {
             $amt = (float) $op->amount;
-            $ftype = $op->financialAccount->type; 
+            $ftype = $op->financialAccount->type;
 
             if ($ftype === 'cash') {
                 if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                 else $opsSummary['cash_out'] += $amt;
-            } 
-
-            elseif (in_array($ftype, ['bca', 'mandiri'])) {
+            } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-  
-                    $opsSummary['transfer_to_bank'] += $amt; 
-                } 
-                else {
+
+                    $opsSummary['transfer_to_bank'] += $amt;
+                } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
 
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt;
                 }
-            }
-
-            elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
+            } elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
                 if (Str::contains($ftype, 'bca')) {
                     if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['bca_out'] += $amt;
@@ -145,15 +148,15 @@ class LaporanController extends Controller
         $totalAssetValas = \App\Models\Currencies::all()->sum(function ($currency) {
             return $currency->stock_amount * $currency->average_rate;
         });
-        
+
         $opsHistory = $opsEntries->map(function ($op) {
-             return [
-                'id' => 'ops-'.$op->id,
+            return [
+                'id' => 'ops-' . $op->id,
                 'time' => $op->created_at->translatedFormat('d M Y H:i'),
-                'type' => 'OPERATIONAL', 
+                'type' => 'OPERATIONAL',
                 'formatted_time' => $op->created_at->toISOString(),
                 'invoice_number' => $op->type === 'in' ? 'IN-OPS' : 'OUT-OPS',
-                'transaction_type' => $op->type, 
+                'transaction_type' => $op->type,
                 'customer' => $op->description,
                 'currency_code' => 'IDR',
                 'rate' => 1,
@@ -166,13 +169,13 @@ class LaporanController extends Controller
         });
 
         $combinedHistory = $todaysTransactions->map(function ($trx) {
-             return [
+            return [
                 'id' => $trx->id,
                 'time' => $trx->created_at->translatedFormat('d M Y H:i'),
                 'type' => $trx->invoice_number,
                 'formatted_time' => $trx->created_at->toISOString(),
                 'invoice_number' => $trx->invoice_number,
-                'transaction_type' => $trx->type, 
+                'transaction_type' => $trx->type,
                 'customer' => $trx->customer_name,
                 'currency_code' => $trx->currency ? $trx->currency->code : '???',
                 'rate' => $trx->rate,
@@ -184,7 +187,24 @@ class LaporanController extends Controller
             ];
         });
 
-        $mergedHistory = $combinedHistory->concat($opsHistory)->sortByDesc('formatted_time')->values();
+        $mergedHistory = $combinedHistory
+            ->concat($opsHistory)
+            ->sortByDesc('formatted_time')
+            ->values();
+
+        $perPage = 10;
+        $page = request()->get('page', 1);
+
+        $paginatedTransactions = new LengthAwarePaginator(
+            $mergedHistory->forPage($page, $perPage),
+            $mergedHistory->count(),
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
 
         return Inertia::render('Laporan/Index', [
             'date' => $date,
@@ -200,7 +220,7 @@ class LaporanController extends Controller
                     'sales' => $totalSales,
                     'asset_valas' => $totalAssetValas,
                 ],
-                'transactions' => $mergedHistory, 
+                'transactions' => $paginatedTransactions,
                 'ops' => $opsSummary
             ]
         ]);
