@@ -379,7 +379,7 @@ class LaporanController extends Controller
                 'ops' => [
                      'cash_in' => 0, 
                 ],
-                'transactions' => $mergedHistory,
+                'transactions' => $paginatedTransactions,
                 'saldo_akhir' => [
                     'cash' => $dailyClosing->cash_ending_balance,
                     'bca' => $dailyClosing->bca_ending_balance,
@@ -551,7 +551,7 @@ class LaporanController extends Controller
                         'total_money' => $totalSaldoAkhir,
                         'asset_valas' => $totalAssetValas,
                     ],
-                    'transactions' => $mergedHistory, 
+                    'transactions' => $paginatedTransactions, 
                     'ops' => $opsSummary
                 ]
             ]);

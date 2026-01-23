@@ -78,7 +78,7 @@ export interface ReportData {
         sales: number;
         asset_valas: number;
     };
-    transactions: TransactionHistory[];
+    transactions: PaginatedData<TransactionHistory>;
     ops: {
         cash_in: number;
         cash_out: number;
