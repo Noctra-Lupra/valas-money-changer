@@ -14,14 +14,22 @@ class RiwayatController extends Controller
 
         if ($request->has('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%");
+                    ->orWhere('customer_name', 'like', "%{$search}%");
             });
         }
 
         if ($request->has('type') && in_array($request->type, ['buy', 'sell'])) {
             $query->where('type', $request->type);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         $transactions = $query->OrderBy('id')
@@ -30,7 +38,12 @@ class RiwayatController extends Controller
 
         return Inertia::render('Riwayat/Index', [
             'transactions' => $transactions,
-            'filters' => $request->only(['search', 'type']),
+            'filters' => $request->only([
+                'search',
+                'type',
+                'start_date',
+                'end_date',
+            ]),
         ]);
     }
 

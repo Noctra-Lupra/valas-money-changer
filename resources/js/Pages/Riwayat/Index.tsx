@@ -1,12 +1,27 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage, router } from '@inertiajs/react';
+import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
+import { Badge } from '@/Components/ui/badge';
 import {
     Card,
     CardContent,
+    CardDescription,
     CardHeader,
     CardTitle,
-    CardDescription,
 } from '@/Components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/Components/ui/dialog';
+import { Input } from '@/Components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 import {
     Table,
     TableBody,
@@ -15,41 +30,31 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Button } from '@/components/ui/button';
+import { Head, Link, router } from '@inertiajs/react';
 import { Eye, Printer, Search } from 'lucide-react';
-import { Badge } from '@/Components/ui/badge';
-import { useState, useEffect, useRef } from 'react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/Components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/Components/ui/select';
-import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
-import { Input } from '@/Components/ui/input';
+import { useEffect, useRef, useState } from 'react';
 
-import { PaginationLink, PaginatedData } from '@/types';
+import { PaginatedData } from '@/types';
 
 interface Props {
     transactions: PaginatedData<Transaction>;
     filters: {
         search?: string;
         type?: string;
+        start_date?: string;
+        end_date?: string;
     };
 }
 
 export default function RiwayatIndex({ transactions, filters }: Props) {
-    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [selectedTransaction, setSelectedTransaction] =
+        useState<Transaction | null>(null);
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
 
     const isFirstRender = useRef(true);
 
@@ -64,21 +69,27 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                 route('riwayat.index'),
                 {
                     search: search,
-                    type: typeFilter === 'all' ? undefined : typeFilter
+                    type: typeFilter === 'all' ? undefined : typeFilter,
+                    start_date: startDate || undefined,
+                    end_date: endDate || undefined,
                 },
                 {
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
-                }
+                },
             );
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [search, typeFilter]);
+    }, [search, typeFilter, startDate, endDate]);
 
     const formatIDR = (val: number) =>
-        new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+        new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0,
+        }).format(val);
 
     const handlePrint = (transactionId: number) => {
         window.open(route('riwayat.print', transactionId), '_blank');
@@ -97,14 +108,34 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
             <div className="mx-auto w-full max-w-7xl">
                 <Card>
                     <CardHeader className="space-y-0">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <CardTitle>Daftar Transaksi</CardTitle>
                                 <CardDescription>
-                                    Lihat riwayat transaksi dan cetak ulang nota.
+                                    Lihat riwayat transaksi dan cetak ulang
+                                    nota.
                                 </CardDescription>
                             </div>
-                            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
+                                <div className="flex lg:gap-2 items-center">
+                                    <Input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) =>
+                                            setStartDate(e.target.value)
+                                        }
+                                        className="w-full md:w-[150px]"
+                                    />
+                                    <span>-</span>
+                                    <Input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) =>
+                                            setEndDate(e.target.value)
+                                        }
+                                        className="w-full md:w-[150px]"
+                                    />
+                                </div>
                                 <Select
                                     value={typeFilter}
                                     onValueChange={(val) => setTypeFilter(val)}
@@ -113,9 +144,15 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                         <SelectValue placeholder="Tipe" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Semua Tipe</SelectItem>
-                                        <SelectItem value="buy">Beli (Masuk)</SelectItem>
-                                        <SelectItem value="sell">Jual (Keluar)</SelectItem>
+                                        <SelectItem value="all">
+                                            Semua Tipe
+                                        </SelectItem>
+                                        <SelectItem value="buy">
+                                            Beli (Masuk)
+                                        </SelectItem>
+                                        <SelectItem value="sell">
+                                            Jual (Keluar)
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -125,7 +162,9 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                         placeholder="Cari Invoice/Nasabah..."
                                         className="pl-9"
                                         value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -141,47 +180,87 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                     <TableHead>Nasabah</TableHead>
                                     <TableHead>Tipe</TableHead>
                                     <TableHead>Valas</TableHead>
-                                    <TableHead className="text-right">Kurs</TableHead>
-                                    <TableHead className="text-center">Pembayaran</TableHead>
-                                    <TableHead className="text-right">Total (IDR)</TableHead>
-                                    <TableHead className="text-right">Aksi</TableHead>
+                                    <TableHead className="text-right">
+                                        Kurs
+                                    </TableHead>
+                                    <TableHead className="text-center">
+                                        Pembayaran
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Total (IDR)
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Aksi
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {transactions.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                        <TableCell
+                                            colSpan={7}
+                                            className="py-8 text-center text-muted-foreground"
+                                        >
                                             Belum ada transaksi data.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     transactions.data.map((transaction) => (
                                         <TableRow key={transaction.id}>
-                                            <TableCell className="font-medium font-mono">
+                                            <TableCell className="font-mono font-medium">
                                                 {transaction.invoice_number}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(transaction.created_at).toLocaleString('id-ID')}
+                                                {new Date(
+                                                    transaction.created_at,
+                                                ).toLocaleString('id-ID')}
                                             </TableCell>
-                                            <TableCell>{transaction.customer_name}</TableCell>
                                             <TableCell>
-                                                <Badge variant={transaction.type === 'buy' ? 'default' : 'secondary'} className={transaction.type === 'buy' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-orange-600 text-white hover:bg-orange-700'}>
-                                                    {transaction.type === 'buy' ? 'BELI' : 'JUAL'}
+                                                {transaction.customer_name}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={
+                                                        transaction.type ===
+                                                        'buy'
+                                                            ? 'default'
+                                                            : 'secondary'
+                                                    }
+                                                    className={
+                                                        transaction.type ===
+                                                        'buy'
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'bg-orange-600 text-white hover:bg-orange-700'
+                                                    }
+                                                >
+                                                    {transaction.type === 'buy'
+                                                        ? 'BELI'
+                                                        : 'JUAL'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {transaction.currency.code} <span className="text-xs text-muted-foreground">x {transaction.amount}</span>
+                                                {transaction.currency.code}{' '}
+                                                <span className="text-xs text-muted-foreground">
+                                                    x {transaction.amount}
+                                                </span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 {formatIDR(transaction.rate)}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant="outline" className="uppercase">
-                                                    {transaction.financial_account?.type || 'CASH'}
+                                                <Badge
+                                                    variant="outline"
+                                                    className="uppercase"
+                                                >
+                                                    {transaction
+                                                        .financial_account
+                                                        ?.type || 'CASH'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right font-bold">
-                                                {formatIDR(transaction.total_idr)}
+                                                {formatIDR(
+                                                    transaction.total_idr,
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
@@ -190,24 +269,41 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                onClick={() => setSelectedTransaction(transaction)}
+                                                                onClick={() =>
+                                                                    setSelectedTransaction(
+                                                                        transaction,
+                                                                    )
+                                                                }
                                                             >
-                                                                <Eye className="w-4 h-4 mr-1" />
+                                                                <Eye className="mr-1 h-4 w-4" />
                                                                 Preview
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                                        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
                                                             <DialogHeader>
-                                                                <DialogTitle>Preview Nota</DialogTitle>
+                                                                <DialogTitle>
+                                                                    Preview Nota
+                                                                </DialogTitle>
                                                             </DialogHeader>
-                                                            <div className="py-4 overflow-x-auto">
+                                                            <div className="overflow-x-auto py-4">
                                                                 {selectedTransaction && (
-                                                                    <InvoiceTemplate transaction={selectedTransaction} />
+                                                                    <InvoiceTemplate
+                                                                        transaction={
+                                                                            selectedTransaction
+                                                                        }
+                                                                    />
                                                                 )}
                                                             </div>
                                                             <div className="flex justify-end gap-2">
-                                                                <Button onClick={() => selectedTransaction && handlePrint(selectedTransaction.id)}>
-                                                                    <Printer className="w-4 h-4 mr-2" />
+                                                                <Button
+                                                                    onClick={() =>
+                                                                        selectedTransaction &&
+                                                                        handlePrint(
+                                                                            selectedTransaction.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Printer className="mr-2 h-4 w-4" />
                                                                     Cetak Nota
                                                                 </Button>
                                                             </div>
@@ -217,9 +313,13 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        onClick={() => handlePrint(transaction.id)}
+                                                        onClick={() =>
+                                                            handlePrint(
+                                                                transaction.id,
+                                                            )
+                                                        }
                                                     >
-                                                        <Printer className="w-4 h-4 text-muted-foreground hover:text-black" />
+                                                        <Printer className="h-4 w-4 text-muted-foreground hover:text-black" />
                                                     </Button>
                                                 </div>
                                             </TableCell>
@@ -232,7 +332,8 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                         {/* Pagination */}
                         <div className="mt-4 flex items-center justify-between">
                             <div className="text-sm text-muted-foreground">
-                                Showing {transactions.from} to {transactions.to} of {transactions.total} results
+                                Showing {transactions.from} to {transactions.to}{' '}
+                                of {transactions.total} results
                             </div>
                             <div className="flex gap-1">
                                 {transactions.links.map((link, i) => (
@@ -240,16 +341,18 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                         key={i}
                                         href={link.url || '#'}
                                         preserveScroll
-                                        className={`px-3 py-1 rounded text-sm ${link.active
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                                            } ${!link.url && 'opacity-50 pointer-events-none'}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        className={`rounded px-3 py-1 text-sm ${
+                                            link.active
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        } ${!link.url && 'pointer-events-none opacity-50'}`}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                     />
                                 ))}
                             </div>
                         </div>
-
                     </CardContent>
                 </Card>
             </div>
