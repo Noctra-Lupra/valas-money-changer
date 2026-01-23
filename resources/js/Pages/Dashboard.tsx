@@ -30,7 +30,7 @@ type Transaction = {
 };
 
 
-export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [] }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[] }>) {
+export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [], yesterdayGrandTotal = 0, todayClosing = null }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[], yesterdayGrandTotal?: number, todayClosing?: any }>) {
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
     const filteredTransactions = recentTransactions.filter((trx) => {
@@ -77,17 +77,23 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
 
 
 
-    const cashBalance = financialAccounts
-        .filter(acc => acc.type === 'cash')
-        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+    const cashBalance = todayClosing
+        ? Number(todayClosing.cash_ending_balance)
+        : financialAccounts
+            .filter(acc => acc.type === 'cash')
+            .reduce((sum, acc) => sum + Number(acc.balance), 0);
 
-    const bcaBalance = financialAccounts
-        .filter(acc => acc.type.toLowerCase().includes('bca'))
-        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+    const bcaBalance = todayClosing
+        ? Number(todayClosing.bca_ending_balance)
+        : financialAccounts
+            .filter(acc => acc.type.toLowerCase().includes('bca'))
+            .reduce((sum, acc) => sum + Number(acc.balance), 0);
 
-    const mandiriBalance = financialAccounts
-        .filter(acc => acc.type.toLowerCase().includes('mandiri'))
-        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+    const mandiriBalance = todayClosing
+        ? Number(todayClosing.mandiri_ending_balance)
+        : financialAccounts
+            .filter(acc => acc.type.toLowerCase().includes('mandiri'))
+            .reduce((sum, acc) => sum + Number(acc.balance), 0);
 
     return (
         <AuthenticatedLayout
@@ -141,7 +147,7 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
                             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">Rp 0</div>
+                            <div className="text-2xl font-bold">{formatCurrency(yesterdayGrandTotal)}</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -171,7 +177,7 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
                         <div>
                             <CardTitle className="text-xl">Riwayat Transaksi</CardTitle>
                             <CardDescription>
-                                Daftar transaksi yang terjadi hari ini (Auto-reset 00:00).
+                                Daftar transaksi yang terjadi hari ini
                             </CardDescription>
                         </div>
 
