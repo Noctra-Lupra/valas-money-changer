@@ -1,13 +1,22 @@
-import { PageProps, ReportData } from '@/types';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
-import { useState } from 'react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/Components/ui/alert-dialog';
+import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Card,
     CardContent,
+    CardDescription,
     CardHeader,
     CardTitle,
-    CardDescription
 } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
@@ -19,6 +28,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
+import { Separator } from '@/Components/ui/separator';
 import {
     Table,
     TableBody,
@@ -27,23 +37,19 @@ import {
     TableHeader,
     TableRow,
 } from '@/Components/ui/table';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { PageProps, ReportData } from '@/types';
+import { Head, router, useForm } from '@inertiajs/react';
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/Components/ui/alert-dialog"
-import { Badge } from '@/Components/ui/badge';
-import { Separator } from '@/Components/ui/separator';
-import {
+    ArrowDownRight,
+    ArrowRightLeft,
+    ArrowUpRight,
+    Banknote,
     CalendarIcon,
-    Printer,
+    Coins,
+    Landmark,
     Lock,
+    Printer,
     TrendingUp,
     Wallet,
     Landmark,
@@ -86,6 +92,7 @@ export default function ReportIndex({
 }>) {
 
     const { saldo_awal, mutations, totals, transactions, ops } = reportData;
+    const { data: transactionData, links, from, to, total } = transactions;
 
     const { data, setData, reset } = useForm({
         type: 'out',
@@ -128,13 +135,21 @@ export default function ReportIndex({
     const profitBersih = grandTotalHariIni - yesterdayGrandTotal;
 
     const handleDateChange = (val: string) => {
-        router.get(route('laporan.index'), { date: val }, { preserveState: true, preserveScroll: true });
+        router.get(
+            route('laporan.index'),
+            { date: val },
+            { preserveState: true, preserveScroll: true },
+        );
     };
 
     const formatIDR = (val: number | string) => {
         const num = Number(val);
         if (isNaN(num)) return 'Rp 0';
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0,
+        }).format(num);
     };
 
     const formatNumber = (val: number | string) => {
@@ -579,6 +594,40 @@ export default function ReportIndex({
                                     )}
                                 </TableBody>
                             </Table>
+                        </div>
+                        {/* Pagination */}
+                        <div className="mt-4 flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                                Showing {from} to {to} of {total} results
+                            </div>
+
+                            <div className="flex flex-wrap gap-1">
+                                {links.map((link, i) => (
+                                    <button
+                                        key={i}
+                                        disabled={!link.url}
+                                        onClick={() =>
+                                            link.url &&
+                                            router.get(
+                                                link.url,
+                                                {},
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                        className={`rounded-md border px-3 py-1 text-sm transition ${
+                                            link.active
+                                                ? 'bg-primary text-white'
+                                                : 'bg-white dark:bg-zinc-800'
+                                        } ${!link.url && 'cursor-not-allowed opacity-50'} `}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

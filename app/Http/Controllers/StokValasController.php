@@ -21,12 +21,12 @@ class StokValasController extends Controller
     {
         $request->validate([
             'code' => 'required|string|unique:currencies,code|max:5',
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
         ]);
 
         Currencies::create([
             'code' => strtoupper($request->code),
-            'name' => $request->name,
+            'name' => $request->name ? : "-",
             'variant' => '-',
             'stock_amount' => 0,
             'average_rate' => 0,

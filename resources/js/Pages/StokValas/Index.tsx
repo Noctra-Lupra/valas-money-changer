@@ -202,7 +202,6 @@ export default function StockValas({ stocks }: Props) {
                                                 className="col-span-3"
                                                 value={data.name}
                                                 onChange={(e) => setData('name', e.target.value)}
-                                                required
                                             />
                                         </div>
                                         <DialogFooter className='mt-5'>
