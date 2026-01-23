@@ -15,6 +15,7 @@ Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'ind
 
 Route::get('/transaksi', [\App\Http\Controllers\TransactionController::class, 'index'])->middleware(['auth', 'verified'])->name('transaksi');
 Route::post('/transaksi', [\App\Http\Controllers\TransactionController::class, 'store'])->middleware(['auth', 'verified']);
+Route::post('/currencies/quick', [\App\Http\Controllers\TransactionController::class, 'quickStoreCurrency']);
 
 Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
 Route::post('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'store'])->middleware(['auth', 'verified'])->name('stok-valas.store');
