@@ -25,6 +25,7 @@ Route::get('/operational', function () {
 })->middleware(['auth', 'verified'])->name('operational');
 
 Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->middleware(['auth', 'verified'])->name('laporan.index');
+Route::post('/laporan/end-shift', [\App\Http\Controllers\LaporanController::class, 'endShift'])->middleware(['auth', 'verified'])->name('laporan.end-shift');
 Route::post('/laporan', [\App\Http\Controllers\LaporanController::class, 'store'])->middleware(['auth', 'verified'])->name('laporan.store');
 
 Route::get('/riwayat', [\App\Http\Controllers\RiwayatController::class, 'index'])->middleware(['auth', 'verified'])->name('riwayat.index');
