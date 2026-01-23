@@ -60,7 +60,7 @@ class TransactionController extends Controller
 
             $totalIn = $todaysTransactions->where('type', 'sell')->sum('total_idr');
             $totalOut = $todaysTransactions->where('type', 'buy')->sum('total_idr');
-            
+
             $currentRealBalance = $openingBalance + $totalIn - $totalOut;
 
             if ($currentRealBalance < $totalIDR) {
@@ -75,7 +75,7 @@ class TransactionController extends Controller
                 ->sum('amount');
 
             $currentStockValue = $currency->stock_amount * $currency->average_rate;
-            $soldStockValue    = $soldQtyToday * $currency->average_rate; 
+            $soldStockValue    = $soldQtyToday * $currency->average_rate;
 
             $newPurchaseValue  = $amount * $rate;
 
@@ -90,7 +90,6 @@ class TransactionController extends Controller
 
             $currency->stock_amount += $amount;
             $currency->save();
-
         } else {
             if ($currency->stock_amount < $amount) {
                 return back()->withErrors(['amount' => 'Stok valas tidak mencukupi!']);
@@ -105,11 +104,11 @@ class TransactionController extends Controller
         if ($validated['type'] === 'sell') {
             $cogs = $currency->average_rate;
             $profit = ($rate - $cogs) * $amount;
-        } else { 
+        } else {
             $cogs = $rate;
             $profit = 0;
         }
-        
+
         $today = now()->format('Ymd');
         $countToday = Transactions::whereDate('created_at', now())->count();
         $invoiceNumber = 'TRX-' . $today . '-' . str_pad($countToday + 1, 3, '0', STR_PAD_LEFT);
@@ -130,5 +129,28 @@ class TransactionController extends Controller
         ]);
 
         return back()->with('success', 'Transaksi berhasil disimpan!');
+    }
+
+    public function quickStoreCurrency(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'code' => 'required|string|max:5|unique:currencies,code',
+            ]);
+
+            $currency = Currencies::create([
+                'code' => strtoupper($validated['code']),
+                'name' => '-',
+                'variant' => '-',
+                'stock_amount' => 0,
+                'average_rate' => 0,
+            ]);
+
+            return response()->json($currency, 201);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
