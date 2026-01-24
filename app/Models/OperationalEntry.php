@@ -16,6 +16,7 @@ class OperationalEntry extends Model
         'type',
         'amount',
         'description',
+        'created_at',
     ];
 
     protected $casts = [

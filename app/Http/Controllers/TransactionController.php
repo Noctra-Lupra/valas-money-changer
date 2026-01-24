@@ -109,11 +109,19 @@ class TransactionController extends Controller
             $profit = 0;
         }
 
-        $today = now()->format('Ymd');
-        $countToday = Transactions::whereDate('created_at', now())->count();
-        $invoiceNumber = 'TRX-' . $today . '-' . str_pad($countToday + 1, 3, '0', STR_PAD_LEFT);
+        $transactionDate = now();
+        // Check if today's shift is already closed
+        if (\App\Models\DailyClosing::where('report_date', $transactionDate->toDateString())->exists()) {
+            // If closed, move transaction to next day
+            $transactionDate = $transactionDate->addDay()->startOfDay();
+        }
+
+        $todayStr = $transactionDate->format('Ymd');
+        $countToday = Transactions::whereDate('created_at', $transactionDate)->count();
+        $invoiceNumber = 'TRX-' . $todayStr . '-' . str_pad($countToday + 1, 3, '0', STR_PAD_LEFT);
 
         Transactions::create([
+            'created_at' => $transactionDate,
             'invoice_number' => $invoiceNumber,
             'user_id' => auth()->id(),
             'currency_id' => $validated['currency_id'],

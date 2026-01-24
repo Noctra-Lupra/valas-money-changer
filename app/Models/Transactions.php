@@ -24,6 +24,7 @@ class Transactions extends Model
         'cost_of_good_sold',
         'profit',
         'notes',
+        'created_at',
     ];
 
     public function user()

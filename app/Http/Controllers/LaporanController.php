@@ -67,6 +67,8 @@ class LaporanController extends Controller
             'cash_in' => 0, 'cash_out' => 0,
             'bca_in' => 0, 'bca_out' => 0,
             'mandiri_in' => 0, 'mandiri_out' => 0,
+            'transfer_from_bank_to_cash' => 0, 
+            'transfer_to_bank' => 0,
             'ghost_adjustment' => 0, 
         ];
 
@@ -82,9 +84,11 @@ class LaporanController extends Controller
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
+                    $opsSummary['transfer_to_bank'] += $amt; // RESTORED: Bank In = Cash Out (Deposit)
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED: Bank Out = Cash In (Withdrawal)
                 }
             }
             elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -124,11 +128,11 @@ class LaporanController extends Controller
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-                    $opsSummary['transfer_to_bank'] += $amt; 
+                    $opsSummary['transfer_to_bank'] += $amt; // RESTORED
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
                 }
             }
             elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -265,7 +269,13 @@ class LaporanController extends Controller
             return back()->withErrors(['payment_method' => 'Akun finansial tidak ditemukan for type: ' . $accountType]);
         }
 
+        $entryDate = now();
+        if (\App\Models\DailyClosing::where('report_date', $entryDate->toDateString())->exists()) {
+            $entryDate = $entryDate->addDay()->startOfDay();
+        }
+
         \App\Models\OperationalEntry::create([
+            'created_at' => $entryDate,
             'user_id' => auth()->id(),
             'financial_account_id' => $account->id,
             'type' => $validated['type'],
@@ -406,11 +416,11 @@ class LaporanController extends Controller
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt;
+                        $opsSummary['transfer_to_bank'] += $amt; // RESTORED
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt;
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
                     }
                 }
             }
@@ -442,9 +452,9 @@ class LaporanController extends Controller
                 $saldoAwalMandiri = $prevClosing->mandiri_ending_balance;
             } else {
                 $financialAccounts = FinancialAccount::where('is_active', true)->get();
-                $saldoAwalCash = $financialAccounts->where('type', 'cash')->sum('balance');
-                $saldoAwalBca = $financialAccounts->whereIn('type', ['bca', 'bca2'])->sum('balance');
-                $saldoAwalMandiri = $financialAccounts->whereIn('type', ['mandiri', 'mandiri2'])->sum('balance');
+                $saldoAwalCash = $financialAccounts->filter(fn($acc) => strtolower($acc->type) === 'cash')->sum('balance');
+                $saldoAwalBca = $financialAccounts->filter(fn($acc) => Str::contains(strtolower($acc->type), 'bca'))->sum('balance');
+                $saldoAwalMandiri = $financialAccounts->filter(fn($acc) => Str::contains(strtolower($acc->type), 'mandiri'))->sum('balance');
             }
 
             $mutations = [
@@ -456,7 +466,7 @@ class LaporanController extends Controller
             foreach ($todaysTransactions as $trx) {
                 $nominal = (float) $trx->total_idr;
                 $type = $trx->type;
-                $accountType = $trx->financialAccount ? $trx->financialAccount->type : '';
+                $accountType = $trx->financialAccount ? strtolower($trx->financialAccount->type) : '';
                 
                 if ($accountType === 'cash') {
                     if ($type === 'sell') $mutations['salesCash'] += $nominal;
@@ -481,7 +491,7 @@ class LaporanController extends Controller
 
             foreach ($opsEntries as $op) {
                 $amt = (float) $op->amount;
-                $ftype = $op->financialAccount->type; 
+                $ftype = $op->financialAccount ? strtolower($op->financialAccount->type) : '';
 
                 if ($ftype === 'cash') {
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
@@ -491,11 +501,11 @@ class LaporanController extends Controller
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; 
+                        $opsSummary['transfer_to_bank'] += $amt; // RESTORED
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
                     }
                 }
                 elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -552,7 +562,12 @@ class LaporanController extends Controller
                         'asset_valas' => $totalAssetValas,
                     ],
                     'transactions' => $paginatedTransactions, 
-                    'ops' => $opsSummary
+                    'ops' => $opsSummary,
+                    'saldo_akhir' => [
+                        'cash' => $saldoAkhirKas,
+                        'bca' => $saldoAkhirBca,
+                        'mandiri' => $saldoAkhirMandiri,
+                    ],
                 ]
             ]);
         }

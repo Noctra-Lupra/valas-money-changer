@@ -30,7 +30,7 @@ type Transaction = {
 };
 
 
-export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [], yesterdayGrandTotal = 0, todayClosing = null }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[], yesterdayGrandTotal?: number, todayClosing?: any }>) {
+export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [], yesterdayGrandTotal = 0, todayClosing = null, openingBalances }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[], yesterdayGrandTotal?: number, todayClosing?: any, openingBalances?: any }>) {
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
     const filteredTransactions = recentTransactions.filter((trx) => {
@@ -75,25 +75,11 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
         }).format(date);
     };
 
-
-
-    const cashBalance = todayClosing
-        ? Number(todayClosing.cash_ending_balance)
-        : financialAccounts
-            .filter(acc => acc.type === 'cash')
-            .reduce((sum, acc) => sum + Number(acc.balance), 0);
-
-    const bcaBalance = todayClosing
-        ? Number(todayClosing.bca_ending_balance)
-        : financialAccounts
-            .filter(acc => acc.type.toLowerCase().includes('bca'))
-            .reduce((sum, acc) => sum + Number(acc.balance), 0);
-
-    const mandiriBalance = todayClosing
-        ? Number(todayClosing.mandiri_ending_balance)
-        : financialAccounts
-            .filter(acc => acc.type.toLowerCase().includes('mandiri'))
-            .reduce((sum, acc) => sum + Number(acc.balance), 0);
+    // Use explicit opening balances passed from controller
+    // If not available (fallback), use 0
+    const cashBalance = openingBalances?.cash || 0;
+    const bcaBalance = openingBalances?.bca || 0;
+    const mandiriBalance = openingBalances?.mandiri || 0;
 
     return (
         <AuthenticatedLayout
