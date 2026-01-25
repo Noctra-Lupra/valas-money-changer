@@ -84,11 +84,11 @@ class LaporanController extends Controller
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-                    $opsSummary['transfer_to_bank'] += $amt; // RESTORED: Bank In = Cash Out (Deposit)
+                    $opsSummary['transfer_to_bank'] += $amt; 
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED: Bank Out = Cash In (Withdrawal)
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                 }
             }
             elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -128,11 +128,11 @@ class LaporanController extends Controller
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-                    $opsSummary['transfer_to_bank'] += $amt; // RESTORED
+                    $opsSummary['transfer_to_bank'] += $amt; 
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                 }
             }
             elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -501,11 +501,11 @@ class LaporanController extends Controller
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; // RESTORED
+                        $opsSummary['transfer_to_bank'] += $amt; 
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                     }
                 }
                 elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
@@ -570,6 +570,60 @@ class LaporanController extends Controller
                     ],
                 ]
             ]);
+        }
+    }
+    public function destroy($id)
+    {
+        $today = now()->toDateString();
+        
+        if (Str::startsWith($id, 'ops-')) {
+            $realId = Str::replace('ops-', '', $id);
+            $op = \App\Models\OperationalEntry::findOrFail($realId);
+            
+            if ($op->created_at->format('Y-m-d') !== $today) {
+                return back()->withErrors(['message' => 'Hanya data hari ini yang bisa dihapus!']);
+            }
+            
+            if (DailyClosing::where('report_date', $today)->exists()) {
+                 return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
+            }
+
+            $op->delete();
+            return back()->with('success', 'Data operasional berhasil dihapus.');
+        } else {
+            $trx = Transactions::findOrFail($id);
+            
+            if ($trx->created_at->format('Y-m-d') !== $today) {
+                return back()->withErrors(['message' => 'Hanya transaksi hari ini yang bisa dihapus!']);
+            }
+            
+            if (DailyClosing::where('report_date', $today)->exists()) {
+                 return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
+            }
+
+            $currency = \App\Models\Currencies::find($trx->currency_id);
+            if ($currency) {
+                if ($trx->type === 'buy') {
+                    $currentTotalVal = $currency->stock_amount * $currency->average_rate;
+                    $buyVal = $trx->amount * $trx->rate;
+                    $prevTotalVal = $currentTotalVal - $buyVal;
+                    $prevStock = $currency->stock_amount - $trx->amount;
+                    
+                    if ($prevStock > 0) {
+                        $currency->average_rate = abs($prevTotalVal) < 0.01 ? 0 : $prevTotalVal / $prevStock;
+                    } else {
+                        $currency->average_rate = 0;
+                    }
+                    $currency->stock_amount = $prevStock;
+                    
+                } elseif ($trx->type === 'sell') {
+                    $currency->stock_amount += $trx->amount;
+                }
+                $currency->save();
+            }
+
+            $trx->delete();
+            return back()->with('success', 'Transaksi berhasil dihapus.');
         }
     }
 }

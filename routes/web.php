@@ -27,6 +27,7 @@ Route::get('/operational', function () {
 Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->middleware(['auth', 'verified'])->name('laporan.index');
 Route::post('/laporan/end-shift', [\App\Http\Controllers\LaporanController::class, 'endShift'])->middleware(['auth', 'verified'])->name('laporan.end-shift');
 Route::post('/laporan', [\App\Http\Controllers\LaporanController::class, 'store'])->middleware(['auth', 'verified'])->name('laporan.store');
+Route::delete('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 'destroy'])->middleware(['auth', 'verified'])->name('laporan.destroy');
 
 Route::get('/riwayat', [\App\Http\Controllers\RiwayatController::class, 'index'])->middleware(['auth', 'verified'])->name('riwayat.index');
 Route::get('/riwayat/{transaction}/print', [\App\Http\Controllers\RiwayatController::class, 'print'])->middleware(['auth', 'verified'])->name('riwayat.print');

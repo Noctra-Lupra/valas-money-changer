@@ -39,6 +39,7 @@ import {
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, ReportData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     ArrowDownRight,
     ArrowRightLeft,
@@ -51,15 +52,15 @@ import {
     Printer,
     TrendingUp,
     Wallet,
+    Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Definisikan tipe tambahan agar TypeScript tidak error saat akses total_money
 interface ExtendedReportData extends ReportData {
     totals: {
         buy: number;
         sales: number;
-        total_money: number; // Pastikan ini ada
+        total_money: number;
         asset_valas: number;
     };
     saldo_akhir?: {
@@ -101,36 +102,32 @@ export default function ReportIndex({
     const totalSemuaPembelian = totals.buy;
     const totalSemuaPenjualan = totals.sales;
 
-    // Perhitungan Saldo Akhir Per Akun (Untuk Display di Card Bawah)
     const saldoAkhirKas =
         reportData.saldo_akhir?.cash ??
         (saldo_awal.cash || 0) +
-            (mutations.salesCash || 0) -
-            (mutations.buyCash || 0) +
-            (ops?.cash_in || 0) -
-            (ops?.cash_out || 0) +
-            (ops?.transfer_from_bank_to_cash || 0) -
-            (ops?.transfer_to_bank || 0);
+        (mutations.salesCash || 0) -
+        (mutations.buyCash || 0) +
+        (ops?.cash_in || 0) -
+        (ops?.cash_out || 0) +
+        (ops?.transfer_from_bank_to_cash || 0) -
+        (ops?.transfer_to_bank || 0);
 
     const saldoAkhirBca =
         reportData.saldo_akhir?.bca ??
         (saldo_awal.bca || 0) +
-            (mutations.salesBca || 0) -
-            (mutations.buyBca || 0) +
-            (ops?.bca_in || 0) -
-            (ops?.bca_out || 0);
+        (mutations.salesBca || 0) -
+        (mutations.buyBca || 0) +
+        (ops?.bca_in || 0) -
+        (ops?.bca_out || 0);
 
     const saldoAkhirMandiri =
         reportData.saldo_akhir?.mandiri ??
         (saldo_awal.mandiri || 0) +
-            (mutations.salesMandiri || 0) -
-            (mutations.buyMandiri || 0) +
-            (ops?.mandiri_in || 0) -
-            (ops?.mandiri_out || 0);
+        (mutations.salesMandiri || 0) -
+        (mutations.buyMandiri || 0) +
+        (ops?.mandiri_in || 0) -
+        (ops?.mandiri_out || 0);
 
-    // --- FIX UTAMA DISINI ---
-    // Gunakan nilai 'total_money' langsung dari Backend (Controller)
-    // Jangan hitung manual di frontend agar sinkron dengan database
     const totalSaldoAkhir = totals.total_money;
 
     const grandTotalHariIni = backendGrandTotal;
@@ -215,6 +212,34 @@ export default function ReportIndex({
         );
     };
 
+    const [deleteId, setDeleteId] = useState<string | number | null>(null);
+
+    const confirmDelete = (id: string | number) => {
+        setDeleteId(id);
+    };
+
+    const executeDelete = () => {
+        if (!deleteId) return;
+
+        router.delete(route('laporan.destroy', deleteId), {
+            onSuccess: () => {
+                toast.success('Data berhasil dihapus');
+                setDeleteId(null);
+            },
+            onError: (err: any) => {
+                toast.error(
+                    err?.props?.errors?.message || 'Gagal menghapus data',
+                );
+                setDeleteId(null);
+            },
+            preserveScroll: true,
+        });
+    };
+
+    const todayDate = new Date();
+    const todayString = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
+    const isToday = date === todayString;
+
     return (
         <AuthenticatedLayout
             header={
@@ -224,6 +249,35 @@ export default function ReportIndex({
             }
         >
             <Head title="Laporan Harian" />
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog
+                open={!!deleteId}
+                onOpenChange={(open) => !open && setDeleteId(null)}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Apakah Anda yakin ingin menghapus data ini? Tindakan
+                            ini akan mengembalikan stok/saldo jika data yang
+                            dihapus adalah transaksi, dan tidak dapat
+                            dibatalkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={false}>
+                            Batal
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={executeDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Hapus Data
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <div className="flex min-h-screen w-full flex-col gap-8 px-6 py-2">
                 <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:items-center">
@@ -422,14 +476,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesBca || 0) +
-                                                (ops?.bca_in || 0),
+                                            (ops?.bca_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyBca || 0) +
-                                                (ops?.bca_out || 0),
+                                            (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -462,14 +516,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesMandiri || 0) +
-                                                (ops?.mandiri_in || 0),
+                                            (ops?.mandiri_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyMandiri || 0) +
-                                                (ops?.mandiri_out || 0),
+                                            (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -535,9 +589,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesBca || 0) -
-                                                (mutations.buyBca || 0) +
-                                                (ops?.bca_in || 0) -
-                                                (ops?.bca_out || 0),
+                                            (mutations.buyBca || 0) +
+                                            (ops?.bca_in || 0) -
+                                            (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -551,9 +605,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesMandiri || 0) -
-                                                (mutations.buyMandiri || 0) +
-                                                (ops?.mandiri_in || 0) -
-                                                (ops?.mandiri_out || 0),
+                                            (mutations.buyMandiri || 0) +
+                                            (ops?.mandiri_in || 0) -
+                                            (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -772,6 +826,9 @@ export default function ReportIndex({
                                         <TableHead className="w-[120px] text-center">
                                             User
                                         </TableHead>
+                                        <TableHead className="w-[50px] text-center">
+                                            Aksi
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -815,8 +872,8 @@ export default function ReportIndex({
                                                                 ? 'border-gray-300 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
                                                                 : item.transaction_type ===
                                                                     'buy'
-                                                                  ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
-                                                                  : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
+                                                                    ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
+                                                                    : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
                                                         }
                                                     >
                                                         {item.transaction_type.toUpperCase()}
@@ -856,13 +913,12 @@ export default function ReportIndex({
                                                 </TableCell>
 
                                                 <TableCell
-                                                    className={`text-right font-bold ${
-                                                        ['buy', 'out'].includes(
-                                                            item.transaction_type,
-                                                        )
-                                                            ? 'text-red-600 dark:text-red-500'
-                                                            : 'text-green-600 dark:text-green-500'
-                                                    }`}
+                                                    className={`text-right font-bold ${['buy', 'out'].includes(
+                                                        item.transaction_type,
+                                                    )
+                                                        ? 'text-red-600 dark:text-red-500'
+                                                        : 'text-green-600 dark:text-green-500'
+                                                        }`}
                                                 >
                                                     {['buy', 'out'].includes(
                                                         item.transaction_type,
@@ -875,6 +931,22 @@ export default function ReportIndex({
                                                 <TableCell className="text-center text-xs">
                                                     {capitalizeWords(
                                                         item.user_name,
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {isToday && !isClosed && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
+                                                            onClick={() =>
+                                                                confirmDelete(
+                                                                    item.id,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     )}
                                                 </TableCell>
                                             </TableRow>

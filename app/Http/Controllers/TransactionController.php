@@ -110,15 +110,27 @@ class TransactionController extends Controller
         }
 
         $transactionDate = now();
-        // Check if today's shift is already closed
         if (\App\Models\DailyClosing::where('report_date', $transactionDate->toDateString())->exists()) {
-            // If closed, move transaction to next day
             $transactionDate = $transactionDate->addDay()->startOfDay();
         }
 
         $todayStr = $transactionDate->format('Ymd');
-        $countToday = Transactions::whereDate('created_at', $transactionDate)->count();
-        $invoiceNumber = 'TRX-' . $todayStr . '-' . str_pad($countToday + 1, 3, '0', STR_PAD_LEFT);
+        
+        $latestTransaction = Transactions::withTrashed()
+            ->whereDate('created_at', $transactionDate)
+            ->where('invoice_number', 'like', 'TRX-' . $todayStr . '-%')
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+
+        $nextSequence = 1;
+        if ($latestTransaction) {
+            $parts = explode('-', $latestTransaction->invoice_number);
+            if (count($parts) === 3) {
+                $nextSequence = intval($parts[2]) + 1;
+            }
+        }
+
+        $invoiceNumber = 'TRX-' . $todayStr . '-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
 
         Transactions::create([
             'created_at' => $transactionDate,
