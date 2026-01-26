@@ -125,12 +125,6 @@ export default function InvoiceTemplate({
     const isUSD = transaction.currency.code === 'USD';
     const isUSDC = transaction.currency.code === 'USDC';
 
-    // PRIORITAS 0: Custom layout hanya dipakai kalau templateId = 4
-    if (templateId === 4 && items && items.length > 0) {
-        return renderItems();
-    }
-
-    // PRIORITAS 1: Template berdasarkan templateId (1 - 4)
     if (templateId === 1) {
         return (
             <div className="relative w-full">
@@ -285,7 +279,6 @@ export default function InvoiceTemplate({
         );
     }
 
-    // PRIORITAS 2: Kalau templateId 2/3/4, lu bisa mapping sesuai desain lu
     if (templateId === 2) {
         return (
             <div className="w-full border border-black bg-white p-4 font-mono text-sm text-black">
@@ -394,6 +387,143 @@ export default function InvoiceTemplate({
 
                 <div className="border-t border-blue-200 pt-4 text-center">
                     TOTAL RP: {formatIDR(transaction.total_idr)}
+                </div>
+            </div>
+        );
+    }
+
+    if (templateId === 4) {
+        return (
+            <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 text-black shadow-md">
+                {/* HEADER */}
+                <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
+                    <div>
+                        <h1 className="text-xl font-bold uppercase tracking-wide">
+                            PT. MONEY CHANGER SEJAHTERA
+                        </h1>
+                        <p className="text-xs text-gray-500">
+                            Penukaran Valuta Asing • Jl. Jendral Sudirman No.
+                            88, Jakarta Pusat
+                        </p>
+                        <p className="text-xs text-gray-500">
+                            Telp: 021-555-9999
+                        </p>
+                    </div>
+
+                    <div className="text-right">
+                        <p className="text-xs font-semibold text-gray-500">
+                            INVOICE
+                        </p>
+                        <p className="text-lg font-bold">
+                            {transaction.invoice_number}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                            {new Date(transaction.created_at).toLocaleString(
+                                'id-ID',
+                            )}
+                        </p>
+                    </div>
+                </div>
+
+                {/* INFO */}
+                <div className="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div>
+                        <p className="text-xs font-semibold text-gray-500">
+                            CUSTOMER
+                        </p>
+                        <p className="text-base font-bold uppercase">
+                            {transaction.customer_name || '-'}
+                        </p>
+                    </div>
+
+                    <div className="text-right">
+                        <p className="text-xs font-semibold text-gray-500">
+                            PAYMENT METHOD
+                        </p>
+                        <p className="text-base font-bold uppercase">
+                            {paymentMethod}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p className="text-xs font-semibold text-gray-500">
+                            TYPE
+                        </p>
+                        <p className="text-sm font-medium uppercase">
+                            {transaction.type || '-'}
+                        </p>
+                    </div>
+
+                    <div className="text-right">
+                        <p className="text-xs font-semibold text-gray-500">
+                            CREATED BY
+                        </p>
+                        <p className="text-sm font-medium">
+                            {transaction.user?.name || '-'}
+                        </p>
+                    </div>
+                </div>
+
+                {/* TABLE */}
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                    <div className="grid grid-cols-4 bg-gray-100 text-center text-xs font-bold uppercase text-gray-600">
+                        <div className="border-r border-gray-200 p-3">
+                            Mata Uang
+                        </div>
+                        <div className="border-r border-gray-200 p-3">
+                            Jumlah
+                        </div>
+                        <div className="border-r border-gray-200 p-3">Kurs</div>
+                        <div className="p-3">Total</div>
+                    </div>
+
+                    <div className="grid grid-cols-4 text-center text-sm">
+                        <div className="border-r border-gray-200 p-4 text-lg font-bold">
+                            {transaction.currency.code}
+                        </div>
+                        <div className="border-r border-gray-200 p-4">
+                            {Number(transaction.amount).toLocaleString('id-ID')}
+                        </div>
+                        <div className="border-r border-gray-200 p-4">
+                            {formatIDR(transaction.rate)}
+                        </div>
+                        <div className="p-4 font-bold">
+                            {formatIDR(transaction.total_idr)}
+                        </div>
+                    </div>
+                </div>
+
+                {/* TOTAL SUMMARY */}
+                <div className="mt-6 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
+                    <div>
+                        <p className="text-xs font-semibold text-gray-500">
+                            GRAND TOTAL
+                        </p>
+                        <p className="text-xl font-black">
+                            {formatIDR(transaction.total_idr)}
+                        </p>
+                    </div>
+
+                    <div className="text-right text-xs text-gray-500">
+                        <p>Terima kasih 🙏</p>
+                        <p>Harap simpan nota ini sebagai bukti transaksi</p>
+                    </div>
+                </div>
+
+                {/* SIGNATURE */}
+                <div className="mt-6 grid grid-cols-3 gap-4 text-center text-xs text-gray-600">
+                    <div className="rounded-xl border border-gray-200 p-4">
+                        <div className="mb-10 h-[1px] w-full bg-gray-300"></div>
+                        Authorized
+                    </div>
+                    <div className="rounded-xl border border-gray-200 p-4">
+                        <div className="mb-10 h-[1px] w-full bg-gray-300"></div>
+                        Kasir
+                    </div>
+                    <div className="rounded-xl border border-gray-200 p-4">
+                        <div className="mb-10 h-[1px] w-full bg-gray-300"></div>
+                        Nasabah
+                    </div>
                 </div>
             </div>
         );

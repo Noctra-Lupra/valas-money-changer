@@ -864,14 +864,14 @@ export default function Transaksi({ currencies }: Props) {
                         </Tabs>
                     </div>
 
-                    <div className="mb-6 flex gap-2">
+                    {/* <div className="mb-6 flex gap-2">
                         <Button
                             variant="outline"
                             onClick={() => setIsEditMode(true)}
                         >
                             Edit Template
                         </Button>
-                    </div>
+                    </div> */}
 
                     <div className="mb-4 flex items-center gap-2">
                         <Printer className="h-5 w-5 text-gray-500" />
