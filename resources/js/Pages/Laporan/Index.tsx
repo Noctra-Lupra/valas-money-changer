@@ -299,11 +299,20 @@ export default function ReportIndex({
                     </div>
 
                     <div className="flex w-full gap-3 md:w-auto">
-                        <Button
+                        {/* <Button
                             variant="outline"
                             className="h-10 gap-2 border-gray-300 px-4 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-200"
                         >
                             <Printer className="h-4 w-4" /> Cetak
+                        </Button> */}
+                        <Button
+                            variant="outline"
+                            className="h-10 gap-2 border-green-600 px-4 text-green-700 hover:bg-green-50 dark:border-green-800 dark:bg-zinc-800 dark:text-green-500 hover:dark:bg-green-900/20"
+                            asChild
+                        >
+                            <a href={route('laporan.export', { date: date })} target="_blank">
+                                <Printer className="h-4 w-4" /> Export Excel
+                            </a>
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
