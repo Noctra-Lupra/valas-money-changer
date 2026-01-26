@@ -25,6 +25,7 @@ Route::get('/operational', function () {
 })->middleware(['auth', 'verified'])->name('operational');
 
 Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->middleware(['auth', 'verified'])->name('laporan.index');
+Route::get('/laporan/export', [\App\Http\Controllers\LaporanController::class, 'export'])->middleware(['auth', 'verified'])->name('laporan.export');
 Route::post('/laporan/end-shift', [\App\Http\Controllers\LaporanController::class, 'endShift'])->middleware(['auth', 'verified'])->name('laporan.end-shift');
 Route::post('/laporan', [\App\Http\Controllers\LaporanController::class, 'store'])->middleware(['auth', 'verified'])->name('laporan.store');
 Route::delete('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 'destroy'])->middleware(['auth', 'verified'])->name('laporan.destroy');
