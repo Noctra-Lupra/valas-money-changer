@@ -40,6 +40,7 @@ import { PaginatedData } from '@/types';
 
 interface Props {
     transactions: PaginatedData<Transaction>;
+    notaLayouts: any[];
     filters: {
         search?: string;
         type?: string;
@@ -48,13 +49,22 @@ interface Props {
     };
 }
 
-export default function RiwayatIndex({ transactions, filters }: Props) {
-    const [selectedTransaction, setSelectedTransaction] =
-        useState<Transaction | null>(null);
+export default function RiwayatIndex({
+    transactions,
+    filters,
+    notaLayouts,
+}: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
+
+    const getLayoutByTemplateId = (templateId: number) => {
+        const found = notaLayouts?.find(
+            (x) => Number(x.template_id) === Number(templateId),
+        );
+        return found?.layout ?? []; // layout = items
+    };
 
     const isFirstRender = useRef(true);
 
@@ -117,7 +127,7 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                 </CardDescription>
                             </div>
                             <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-                                <div className="flex lg:gap-2 items-center">
+                                <div className="flex items-center lg:gap-2">
                                     <Input
                                         type="date"
                                         value={startDate}
@@ -269,37 +279,40 @@ export default function RiwayatIndex({ transactions, filters }: Props) {
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                onClick={() =>
-                                                                    setSelectedTransaction(
-                                                                        transaction,
-                                                                    )
-                                                                }
                                                             >
                                                                 <Eye className="mr-1 h-4 w-4" />
                                                                 Preview
                                                             </Button>
                                                         </DialogTrigger>
+
                                                         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
                                                             <DialogHeader>
                                                                 <DialogTitle>
                                                                     Preview Nota
                                                                 </DialogTitle>
                                                             </DialogHeader>
+
                                                             <div className="overflow-x-auto py-4">
-                                                                {selectedTransaction && (
-                                                                    <InvoiceTemplate
-                                                                        transaction={
-                                                                            selectedTransaction
-                                                                        }
-                                                                    />
-                                                                )}
+                                                                <InvoiceTemplate
+                                                                    transaction={
+                                                                        transaction
+                                                                    }
+                                                                    templateId={
+                                                                        transaction.template_id ??
+                                                                        1
+                                                                    }
+                                                                    items={getLayoutByTemplateId(
+                                                                        transaction.template_id ??
+                                                                            1,
+                                                                    )}
+                                                                />
                                                             </div>
+
                                                             <div className="flex justify-end gap-2">
                                                                 <Button
                                                                     onClick={() =>
-                                                                        selectedTransaction &&
                                                                         handlePrint(
-                                                                            selectedTransaction.id,
+                                                                            transaction.id,
                                                                         )
                                                                     }
                                                                 >

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\NotaLayoutController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReceiptTemplateController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -16,6 +18,13 @@ Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'ind
 Route::get('/transaksi', [\App\Http\Controllers\TransactionController::class, 'index'])->middleware(['auth', 'verified'])->name('transaksi');
 Route::post('/transaksi', [\App\Http\Controllers\TransactionController::class, 'store'])->middleware(['auth', 'verified']);
 Route::post('/currencies/quick', [\App\Http\Controllers\TransactionController::class, 'quickStoreCurrency']);
+
+Route::post('/nota-layout/save', [NotaLayoutController::class, 'save'])
+    ->middleware(['auth'])
+    ->name('nota-layout.save');
+
+Route::post('/receipt-templates', [ReceiptTemplateController::class, 'store']);
+Route::get('/receipt-templates/active', [ReceiptTemplateController::class, 'active']);
 
 Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
 Route::post('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'store'])->middleware(['auth', 'verified'])->name('stok-valas.store');
@@ -49,4 +58,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -15,6 +15,14 @@ import {
     CommandItem,
     CommandList,
 } from '@/Components/ui/command';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
+import { router } from '@inertiajs/react';
+
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import {
@@ -29,6 +37,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
+
+import NotaTemplate1 from '../../Components/nota/NotaTemplate1';
+import NotaTemplate2 from '../../Components/nota/NotaTemplate2';
+import NotaTemplate4 from '../../Components/nota/NotaTemplate4';
+
+import NotaTemplate3 from '@/Components/nota/NotaTemplate3';
 import { Separator } from '@/Components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -38,15 +52,293 @@ import { Head, useForm } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Printer, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import InvoiceTemplate from '@/Components/InvoiceTemplate';
 
 interface Props {
     currencies: Currency[];
 }
 
+type EditorItem = {
+    id: string;
+    type: 'text';
+    content: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    bold?: boolean;
+};
+
+type TemplateId = 1 | 2 | 3 | 4;
+
+const TEMPLATE_ITEMS: Record<TemplateId, EditorItem[]> = {
+    1: [
+        {
+            id: 'title',
+            type: 'text',
+            content: 'NOTA TRANSAKSI',
+            x: 0,
+            y: 0,
+            fontSize: 18,
+            bold: true,
+        },
+        {
+            id: 'customer',
+            type: 'text',
+            content: 'Nama: {{customer}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'currency',
+            type: 'text',
+            content: 'Valuta: {{currency}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'amount',
+            type: 'text',
+            content: 'Jumlah: {{amount}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'rate',
+            type: 'text',
+            content: 'Rate: {{rate}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'total',
+            type: 'text',
+            content: 'Total: {{total}}',
+            x: 0,
+            y: 0,
+            fontSize: 14,
+            bold: true,
+        },
+        {
+            id: 'amount_left',
+            type: 'text',
+            content: 'Total: {{total}}',
+            x: 0,
+            y: 0,
+            fontSize: 14,
+            bold: true,
+        },
+    ],
+
+    2: [
+        {
+            id: 'title',
+            type: 'text',
+            content: 'NOTA TRANSAKSI',
+            x: 0,
+            y: 0,
+            fontSize: 18,
+            bold: true,
+        },
+        {
+            id: 'customer',
+            type: 'text',
+            content: 'Nama: {{customer}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'currency',
+            type: 'text',
+            content: 'Valuta: {{currency}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'amount',
+            type: 'text',
+            content: 'Jumlah: {{amount}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'rate',
+            type: 'text',
+            content: 'Rate: {{rate}}',
+            x: 0,
+            y: 0,
+            fontSize: 12,
+        },
+        {
+            id: 'total',
+            type: 'text',
+            content: 'Total: {{total}}',
+            x: 0,
+            y: 0,
+            fontSize: 14,
+            bold: true,
+        },
+        {
+            id: 'amount_left',
+            type: 'text',
+            content: 'Total: {{total}}',
+            x: 0,
+            y: 0,
+            fontSize: 14,
+            bold: true,
+        },
+    ],
+
+    3: [
+        {
+            id: 'title',
+            type: 'text',
+            content: 'BUKTI TRANSAKSI',
+            x: 95,
+            y: 20,
+            fontSize: 17,
+            bold: true,
+        },
+        {
+            id: 'customer',
+            type: 'text',
+            content: 'Nasabah: {{customer}}',
+            x: 20,
+            y: 75,
+            fontSize: 12,
+        },
+        {
+            id: 'currency',
+            type: 'text',
+            content: 'Mata Uang: {{currency}}',
+            x: 20,
+            y: 100,
+            fontSize: 12,
+        },
+        {
+            id: 'amount',
+            type: 'text',
+            content: 'Jumlah: {{amount}}',
+            x: 20,
+            y: 125,
+            fontSize: 12,
+        },
+        {
+            id: 'rate',
+            type: 'text',
+            content: 'Kurs: {{rate}}',
+            x: 20,
+            y: 150,
+            fontSize: 12,
+        },
+        {
+            id: 'total',
+            type: 'text',
+            content: 'Total Bayar: {{total}}',
+            x: 20,
+            y: 190,
+            fontSize: 14,
+            bold: true,
+        },
+    ],
+
+    4: [
+        {
+            id: 'title',
+            type: 'text',
+            content: 'NOTA PEMBAYARAN',
+            x: 90,
+            y: 20,
+            fontSize: 17,
+            bold: true,
+        },
+        {
+            id: 'customer',
+            type: 'text',
+            content: 'Nama Pelanggan: {{customer}}',
+            x: 20,
+            y: 75,
+            fontSize: 12,
+        },
+        {
+            id: 'currency',
+            type: 'text',
+            content: 'Valas: {{currency}}',
+            x: 20,
+            y: 100,
+            fontSize: 12,
+        },
+        {
+            id: 'amount',
+            type: 'text',
+            content: 'Nominal: {{amount}}',
+            x: 20,
+            y: 125,
+            fontSize: 12,
+        },
+        {
+            id: 'rate',
+            type: 'text',
+            content: 'Rate IDR: {{rate}}',
+            x: 20,
+            y: 150,
+            fontSize: 12,
+        },
+        {
+            id: 'total',
+            type: 'text',
+            content: 'TOTAL IDR: {{total}}',
+            x: 20,
+            y: 195,
+            fontSize: 15,
+            bold: true,
+        },
+    ],
+};
+
+const initialItems = [
+    {
+        id: 'currency',
+        type: 'text' as const,
+        content: '{{currency}}',
+        x: 20,
+        y: 10,
+        fontSize: 16,
+        bold: true,
+    },
+    {
+        id: 'amount',
+        type: 'text' as const,
+        content: '{{amount}}',
+        x: 20,
+        y: 40,
+        fontSize: 14,
+    },
+    {
+        id: 'customer',
+        type: 'text' as const,
+        content: '{{customer}}',
+        x: 20,
+        y: 90,
+        fontSize: 14,
+    },
+];
+
 export default function Transaksi({ currencies }: Props) {
     const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(
         currencies[0] ?? null,
     );
+
+    const [template, setTemplate] = useState<1 | 2 | 3 | 4>(1);
+
+    const [templateLayouts, setTemplateLayouts] =
+        useState<Record<TemplateId, EditorItem[]>>(TEMPLATE_ITEMS);
 
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState<'buy' | 'sell'>('buy');
@@ -58,6 +350,31 @@ export default function Transaksi({ currencies }: Props) {
     const [customRate, setCustomRate] = useState<number | string>('');
     const [total, setTotal] = useState<number>(0);
 
+    const [editorItems, setEditorItems] = useState<EditorItem[]>([]);
+    const [isEditMode, setIsEditMode] = useState(false);
+
+    //     const [items, setItems] = useState<EditorItem[]>(initialItems);
+
+    // const handleDrag = (id: string, dx: number, dy: number) => {
+    //     setItems((prev) =>
+    //         prev.map((item) =>
+    //             item.id === id
+    //                 ? {
+    //                       ...item,
+    //                       x: item.x + dx,
+    //                       y: item.y + dy,
+    //                   }
+    //                 : item,
+    //         ),
+    //     );
+    // };
+
+    useEffect(() => {
+        if (!isEditMode) return;
+
+        setEditorItems(templateLayouts[template].map((item) => ({ ...item })));
+    }, [isEditMode, template, templateLayouts]);
+
     const { data, setData, reset } = useForm({
         customer_name: '',
         currency_id: currencies[0]?.id,
@@ -66,7 +383,12 @@ export default function Transaksi({ currencies }: Props) {
         rate: '',
         total_idr: '',
         payment_method: 'cash',
+        template_id: 1,
     });
+
+    useEffect(() => {
+        setData('template_id', template);
+    }, [template]);
 
     useEffect(() => {
         setCustomRate('');
@@ -74,7 +396,7 @@ export default function Transaksi({ currencies }: Props) {
 
     useEffect(() => {
         if (!selectedCurrency) return;
-        
+
         const parseValue = (val: number | string) => {
             if (!val) return 0;
             const cleanStr = String(val).replace(/\./g, '').replace(',', '.');
@@ -140,6 +462,7 @@ export default function Transaksi({ currencies }: Props) {
 
         const payload = {
             ...data,
+            template_id: template,
             amount: Number(data.amount),
             rate: Number(data.rate),
             total_idr: Number(data.total_idr),
@@ -178,44 +501,43 @@ export default function Transaksi({ currencies }: Props) {
         });
     };
 
-   const handleQuickAddCurrency = async () => {
-    try {
-        const res = await fetch('/currencies/quick', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json', 
-                'X-CSRF-TOKEN': (
-                    document.querySelector(
-                        'meta[name="csrf-token"]',
-                    ) as HTMLMetaElement
-                ).content,
-            },
-            body: JSON.stringify({
-                code: searchCurrency.trim().toUpperCase(),
-            }),
-        });
+    const handleQuickAddCurrency = async () => {
+        try {
+            const res = await fetch('/currencies/quick', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': (
+                        document.querySelector(
+                            'meta[name="csrf-token"]',
+                        ) as HTMLMetaElement
+                    ).content,
+                },
+                body: JSON.stringify({
+                    code: searchCurrency.trim().toUpperCase(),
+                }),
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!res.ok) {
-            throw new Error(data.message || 'Gagal');
+            if (!res.ok) {
+                throw new Error(data.message || 'Gagal');
+            }
+
+            setLocalCurrencies((prev) => [...prev, data]);
+            setSelectedCurrency(data);
+            setData('currency_id', data.id);
+            setSearchCurrency('');
+            setOpen(false);
+
+            toast.success(`Mata uang ${data.code} ditambahkan`);
+        } catch (err: any) {
+            toast.error('Gagal menambahkan mata uang', {
+                description: err.message,
+            });
         }
-
-        setLocalCurrencies((prev) => [...prev, data]);
-        setSelectedCurrency(data);
-        setData('currency_id', data.id);
-        setSearchCurrency('');
-        setOpen(false);
-
-        toast.success(`Mata uang ${data.code} ditambahkan`);
-    } catch (err: any) {
-        toast.error('Gagal menambahkan mata uang', {
-            description: err.message,
-        });
-    }
-};
-
+    };
 
     if (!selectedCurrency) {
         return (
@@ -261,11 +583,16 @@ export default function Transaksi({ currencies }: Props) {
                                         Jenis Transaksi
                                     </Label>
                                     <Tabs
-                                        defaultValue="buy"
-                                        onValueChange={(val) =>
-                                            setMode(val as 'buy' | 'sell')
-                                        }
-                                        className="w-full"
+                                        value={String(template)}
+                                        onValueChange={(v) => {
+                                            const selected = Number(v) as
+                                                | 1
+                                                | 2
+                                                | 3
+                                                | 4;
+                                            setTemplate(selected);
+                                            setData('template_id', selected);
+                                        }}
                                     >
                                         <TabsList className="grid h-11 w-full grid-cols-2">
                                             <TabsTrigger
@@ -518,137 +845,73 @@ export default function Transaksi({ currencies }: Props) {
                 </form>
 
                 <div className="w-full">
+                    <div className="mb-4">
+                        <Label className="mb-2 block">
+                            Pilih Template Nota
+                        </Label>
+                        <Tabs
+                            value={String(template)}
+                            onValueChange={(v) =>
+                                setTemplate(Number(v) as 1 | 2 | 3 | 4)
+                            }
+                        >
+                            <TabsList>
+                                <TabsTrigger value="1">Template 1</TabsTrigger>
+                                <TabsTrigger value="2">Template 2</TabsTrigger>
+                                <TabsTrigger value="3">Template 3</TabsTrigger>
+                                <TabsTrigger value="4">Template 4</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+                    </div>
+
+                    <div className="mb-6 flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsEditMode(true)}
+                        >
+                            Edit Template
+                        </Button>
+                    </div>
+
                     <div className="mb-4 flex items-center gap-2">
                         <Printer className="h-5 w-5 text-gray-500" />
                         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                             Preview Nota Fisik
                         </h3>
                     </div>
-                    <div className="w-full overflow-x-auto border-2 border-dashed border-gray-400 bg-white p-1 font-mono text-sm text-black shadow-sm">
-                        <div className="flex min-w-[800px] border border-black">
-                            <div className="flex w-1/4 flex-col justify-between border-r border-black p-4">
-                                <div>
-                                    <div className="mb-6">
-                                        <p className="mb-1 font-bold">
-                                            Payment :
-                                        </p>
-                                        <p className="text-lg uppercase">
-                                            {data.payment_method}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="mb-1 font-bold">
-                                            Amount :
-                                        </p>
-                                        <p className="text-xl font-bold">
-                                            {formatIDR(total)}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="mt-8 space-y-8">
-                                    <div>
-                                        <div className="mb-1 h-0.5 w-24 bg-black"></div>
-                                        <p className="text-xs">Authorized</p>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <div className="mb-1 h-0.5 w-20 bg-black"></div>
-                                            <p className="text-xs">Kasir</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="mb-1 h-0.5 w-20 bg-black"></div>
-                                            <p className="text-xs">Nasabah</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="w-3/4 p-0">
-                                <div className="flex items-center border-b border-black p-4">
-                                    <div className="mr-4 text-4xl font-black text-blue-800">
-                                        $
-                                    </div>
-                                    <div>
-                                        <h1 className="text-xl font-bold uppercase">
-                                            PT. MONEY CHANGER SEJAHTERA
-                                        </h1>
-                                        <p className="text-xs">
-                                            Penukaran Valuta Asing
-                                        </p>
-                                        <p className="text-xs">
-                                            Jl. Jendral Sudirman No. 88, Jakarta
-                                            Pusat
-                                        </p>
-                                        <p className="text-xs">
-                                            Telp: 021-555-9999
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex border-b border-black bg-gray-100 text-center font-bold">
-                                    <div className="w-1/4 border-r border-black py-2">
-                                        Mata Uang
-                                    </div>
-                                    <div className="w-1/4 border-r border-black py-2">
-                                        Jumlah
-                                    </div>
-                                    <div className="w-1/4 border-r border-black py-2">
-                                        Kurs
-                                    </div>
-                                    <div className="w-1/4 py-2">
-                                        Jumlah Total
-                                    </div>
-                                </div>
-                                <div className="flex h-32 text-center">
-                                    <div className="w-1/4 border-r border-black py-4 text-lg font-bold">
-                                        {selectedCurrency.code}
-                                    </div>
-                                    <div className="w-1/4 border-r border-black py-4">
-                                        {formatNumber(amount)}
-                                    </div>
-                                    <div className="w-1/4 border-r border-black py-4">
-                                        {formatNumber(customRate)}
-                                    </div>
-                                    <div className="w-1/4 py-4 font-bold">
-                                        {formatIDR(total)}
-                                    </div>
-                                </div>
-                                <div className="flex border-t border-black">
-                                    <div className="w-1/2 border-r border-black p-2">
-                                        <p className="text-xs font-bold">
-                                            JUAL KE / SOLD TO :
-                                        </p>
-                                        <p className="mt-1 font-medium uppercase">
-                                            {data.customer_name ||
-                                                '.........................'}
-                                        </p>
-                                    </div>
-                                    <div className="flex w-1/2">
-                                        <div className="w-1/2 border-r border-black p-2">
-                                            <p className="text-xs font-bold">
-                                                NO :
-                                            </p>
-                                            <p className="mt-1">
-                                                TRX-
-                                                {new Date()
-                                                    .getTime()
-                                                    .toString()
-                                                    .slice(-6)}
-                                            </p>
-                                        </div>
-                                        <div className="w-1/2 p-2">
-                                            <p className="text-xs font-bold">
-                                                DATE :
-                                            </p>
-                                            <p className="mt-1">
-                                                {new Date().toLocaleDateString(
-                                                    'id-ID',
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                    <InvoiceTemplate
+                        transaction={{
+                            id: 0,
+                            invoice_number: '-',
+                            template_id: template,
+                            currency: selectedCurrency,
+                            amount:
+                                Number(
+                                    String(amount)
+                                        .replace(/\./g, '')
+                                        .replace(',', '.'),
+                                ) || 0,
+                            rate:
+                                Number(
+                                    String(customRate)
+                                        .replace(/\./g, '')
+                                        .replace(',', '.'),
+                                ) || 0,
+                            total_idr: total,
+                            customer_name: data.customer_name || '-',
+                            payment_method: data.payment_method || 'cash',
+                            created_at: new Date().toISOString(),
+                            type: mode,
+                            user: { name: '-' },
+                            financial_account: {
+                                type: data.payment_method || 'cash',
+                            },
+                        }}
+                        templateId={template}
+                        items={templateLayouts[template]}
+                    />
+
                     <div className="mt-4 flex justify-end">
                         <Button variant="secondary" className="w-48" disabled>
                             <Printer className="mr-2 h-4 w-4" />
@@ -657,6 +920,211 @@ export default function Transaksi({ currencies }: Props) {
                     </div>
                 </div>
             </div>
+            <Dialog open={isEditMode} onOpenChange={setIsEditMode}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Template Nota</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="relative h-[500px] w-full overflow-visible border bg-white">
+                        {template === 1 && (
+                            <NotaTemplate1
+                                data={data}
+                                selectedCurrency={selectedCurrency}
+                                amount={amount}
+                                customRate={customRate}
+                                total={total}
+                                formatIDR={formatIDR}
+                                formatNumber={formatNumber}
+                                items={editorItems}
+                                onDrag={(id, dx, dy) => {
+                                    setEditorItems((prev) =>
+                                        prev.map((item) => {
+                                            if (item.id !== id) return item;
+
+                                            const newX = item.x + dx;
+                                            const newY = item.y + dy;
+
+                                            return {
+                                                ...item,
+                                                x: Math.max(
+                                                    0,
+                                                    Math.min(newX, 900),
+                                                ), // batas kanan
+                                                y: Math.max(
+                                                    0,
+                                                    Math.min(newY, 450),
+                                                ), // batas bawah
+                                            };
+                                        }),
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {template === 2 && (
+                            <NotaTemplate2
+                                data={data}
+                                selectedCurrency={selectedCurrency}
+                                amount={amount}
+                                customRate={customRate}
+                                total={total}
+                                formatIDR={formatIDR}
+                                formatNumber={formatNumber}
+                                items={editorItems}
+                                onDrag={(id, dx, dy) => {
+                                    setEditorItems((prev) =>
+                                        prev.map((item) => {
+                                            if (item.id !== id) return item;
+
+                                            const newX = item.x + dx;
+                                            const newY = item.y + dy;
+
+                                            return {
+                                                ...item,
+                                                x: Math.max(
+                                                    0,
+                                                    Math.min(newX, 900),
+                                                ), // batas kanan
+                                                y: Math.max(
+                                                    0,
+                                                    Math.min(newY, 450),
+                                                ), // batas bawah
+                                            };
+                                        }),
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {template === 3 && (
+                            <NotaTemplate3
+                                data={data}
+                                selectedCurrency={selectedCurrency}
+                                amount={amount}
+                                customRate={customRate}
+                                total={total}
+                                formatIDR={formatIDR}
+                                formatNumber={formatNumber}
+                                items={editorItems}
+                                onDrag={(id, dx, dy) => {
+                                    setEditorItems((prev) =>
+                                        prev.map((item) => {
+                                            if (item.id !== id) return item;
+
+                                            const newX = item.x + dx;
+                                            const newY = item.y + dy;
+
+                                            return {
+                                                ...item,
+                                                x: Math.max(
+                                                    0,
+                                                    Math.min(newX, 900),
+                                                ), // batas kanan
+                                                y: Math.max(
+                                                    0,
+                                                    Math.min(newY, 450),
+                                                ), // batas bawah
+                                            };
+                                        }),
+                                    );
+                                }}
+                            />
+                        )}
+
+                        {template === 4 && (
+                            <NotaTemplate4
+                                data={data}
+                                selectedCurrency={selectedCurrency}
+                                amount={amount}
+                                customRate={customRate}
+                                total={total}
+                                formatIDR={formatIDR}
+                                formatNumber={formatNumber}
+                                items={editorItems}
+                                onDrag={(id, dx, dy) => {
+                                    setEditorItems((prev) =>
+                                        prev.map((item) => {
+                                            if (item.id !== id) return item;
+
+                                            const newX = item.x + dx;
+                                            const newY = item.y + dy;
+
+                                            return {
+                                                ...item,
+                                                x: Math.max(
+                                                    0,
+                                                    Math.min(newX, 900),
+                                                ), // batas kanan
+                                                y: Math.max(
+                                                    0,
+                                                    Math.min(newY, 450),
+                                                ), // batas bawah
+                                            };
+                                        }),
+                                    );
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    <div className="mt-4 flex justify-end gap-2">
+                        <Button
+                            onClick={() => {
+                                router.post(
+                                    '/nota-layout/save',
+                                    {
+                                        template_id: template,
+                                        layout: editorItems,
+                                    },
+                                    {
+                                        preserveScroll: true,
+                                        onStart: () => {
+                                            toast.loading(
+                                                'Menyimpan layout...',
+                                                { id: 'save-layout' },
+                                            );
+                                        },
+                                        onSuccess: () => {
+                                            toast.success(
+                                                'Layout berhasil disimpan!',
+                                                { id: 'save-layout' },
+                                            );
+
+                                            setTemplateLayouts((prev) => ({
+                                                ...prev,
+                                                [template]: editorItems,
+                                            }));
+
+                                            setIsEditMode(false);
+                                        },
+                                        onError: (errors) => {
+                                            console.log(
+                                                'SAVE LAYOUT ERROR:',
+                                                errors,
+                                            );
+
+                                            toast.error('Gagal simpan layout', {
+                                                id: 'save-layout',
+                                                description:
+                                                    (errors as any)
+                                                        ?.template_id ||
+                                                    (errors as any)?.layout ||
+                                                    'Cek console untuk detail error',
+                                            });
+                                        },
+                                        onFinish: () => {
+                                            toast.dismiss('save-layout');
+                                        },
+                                    },
+                                );
+                            }}
+                        >
+                            Simpan Layout
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AuthenticatedLayout>
     );
 }

@@ -27,6 +27,7 @@ class TransactionController extends Controller
             'rate' => 'required|numeric|min:1',
             'customer_name' => 'required|string|max:255',
             'payment_method' => 'required|string',
+            'template_id' => 'required|integer|in:1,2,3,4',
         ]);
 
         $currency = Currencies::findOrFail($validated['currency_id']);
@@ -132,9 +133,12 @@ class TransactionController extends Controller
 
         $invoiceNumber = 'TRX-' . $todayStr . '-' . str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
 
+        // dd($request->all());
+
         Transactions::create([
             'created_at' => $transactionDate,
             'invoice_number' => $invoiceNumber,
+            'template_id' => $validated['template_id'],
             'user_id' => auth()->id(),
             'currency_id' => $validated['currency_id'],
             'financial_account_id' => $account->id,
