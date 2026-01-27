@@ -1,3 +1,7 @@
+'use client';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+
 import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
 import { Badge } from '@/Components/ui/badge';
 import {
@@ -32,10 +36,18 @@ import {
 } from '@/Components/ui/table';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/Components/ui/calendar';
 import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Printer, Search } from 'lucide-react';
+import { CalendarIcon, Eye, Printer, Search } from 'lucide-react';
+
 import { useEffect, useRef, useState } from 'react';
 
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/Components/ui/popover';
+import { cn } from '@/lib/utils';
 import { PaginatedData } from '@/types';
 
 interface Props {
@@ -58,6 +70,22 @@ export default function RiwayatIndex({
     const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
+
+    const [date, setDate] = useState<DateRange | undefined>(undefined);
+
+    useEffect(() => {
+        if (date?.from) {
+            setStartDate(format(date.from, 'yyyy-MM-dd'));
+        } else {
+            setStartDate('');
+        }
+
+        if (date?.to) {
+            setEndDate(format(date.to, 'yyyy-MM-dd'));
+        } else {
+            setEndDate('');
+        }
+    }, [date]);
 
     const getLayoutByTemplateId = (templateId: number) => {
         const found = notaLayouts?.find(
@@ -127,25 +155,63 @@ export default function RiwayatIndex({
                                 </CardDescription>
                             </div>
                             <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-                                <div className="flex items-center lg:gap-2">
-                                    <Input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) =>
-                                            setStartDate(e.target.value)
-                                        }
-                                        className="w-full md:w-[150px]"
-                                    />
-                                    <span>-</span>
-                                    <Input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) =>
-                                            setEndDate(e.target.value)
-                                        }
-                                        className="w-full md:w-[150px]"
-                                    />
+                                <div className="flex items-center">
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    'w-full justify-start text-left font-normal md:w-[260px]',
+                                                    !date?.from &&
+                                                        'text-muted-foreground',
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {date?.from ? (
+                                                    date.to ? (
+                                                        <>
+                                                            {format(
+                                                                date.from,
+                                                                'dd/MM/yyyy',
+                                                            )}{' '}
+                                                            -{' '}
+                                                            {format(
+                                                                date.to,
+                                                                'dd/MM/yyyy',
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        format(
+                                                            date.from,
+                                                            'dd/MM/yyyy',
+                                                        )
+                                                    )
+                                                ) : (
+                                                    <span>
+                                                        Pilih rentang tanggal
+                                                    </span>
+                                                )}
+                                            </Button>
+                                        </PopoverTrigger>
+
+                                        <PopoverContent
+                                            className="w-auto p-0"
+                                            align="start"
+                                        >
+                                            <Calendar
+                                                initialFocus
+                                                mode="range"
+                                                defaultMonth={date?.from}
+                                                selected={date}
+                                                onSelect={(range) =>
+                                                    setDate(range)
+                                                }
+                                                numberOfMonths={2}
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
+
                                 <Select
                                     value={typeFilter}
                                     onValueChange={(val) => setTypeFilter(val)}
