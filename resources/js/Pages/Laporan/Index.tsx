@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,7 +41,6 @@ import {
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, ReportData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
 import {
     ArrowDownRight,
     ArrowRightLeft,
@@ -50,11 +51,15 @@ import {
     Landmark,
     Lock,
     Printer,
+    Trash2,
     TrendingUp,
     Wallet,
-    Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
+import { format } from 'date-fns';
+import { Calendar } from '@/Components/ui/calendar';
 
 interface ExtendedReportData extends ReportData {
     totals: {
@@ -105,28 +110,28 @@ export default function ReportIndex({
     const saldoAkhirKas =
         reportData.saldo_akhir?.cash ??
         (saldo_awal.cash || 0) +
-        (mutations.salesCash || 0) -
-        (mutations.buyCash || 0) +
-        (ops?.cash_in || 0) -
-        (ops?.cash_out || 0) +
-        (ops?.transfer_from_bank_to_cash || 0) -
-        (ops?.transfer_to_bank || 0);
+            (mutations.salesCash || 0) -
+            (mutations.buyCash || 0) +
+            (ops?.cash_in || 0) -
+            (ops?.cash_out || 0) +
+            (ops?.transfer_from_bank_to_cash || 0) -
+            (ops?.transfer_to_bank || 0);
 
     const saldoAkhirBca =
         reportData.saldo_akhir?.bca ??
         (saldo_awal.bca || 0) +
-        (mutations.salesBca || 0) -
-        (mutations.buyBca || 0) +
-        (ops?.bca_in || 0) -
-        (ops?.bca_out || 0);
+            (mutations.salesBca || 0) -
+            (mutations.buyBca || 0) +
+            (ops?.bca_in || 0) -
+            (ops?.bca_out || 0);
 
     const saldoAkhirMandiri =
         reportData.saldo_akhir?.mandiri ??
         (saldo_awal.mandiri || 0) +
-        (mutations.salesMandiri || 0) -
-        (mutations.buyMandiri || 0) +
-        (ops?.mandiri_in || 0) -
-        (ops?.mandiri_out || 0);
+            (mutations.salesMandiri || 0) -
+            (mutations.buyMandiri || 0) +
+            (ops?.mandiri_in || 0) -
+            (ops?.mandiri_out || 0);
 
     const totalSaldoAkhir = totals.total_money;
 
@@ -240,6 +245,10 @@ export default function ReportIndex({
     const todayString = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}-${String(todayDate.getDate()).padStart(2, '0')}`;
     const isToday = date === todayString;
 
+    const selectedDate = React.useMemo(() => {
+        return date ? new Date(date) : undefined;
+    }, [date]);
+
     return (
         <AuthenticatedLayout
             header={
@@ -286,15 +295,43 @@ export default function ReportIndex({
                             Rekapitulasi Harian
                         </h1>
                         <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
-                            <CalendarIcon className="h-4 w-4" />
-                            <Input
-                                type="date"
-                                className="h-8 w-auto border-none bg-transparent p-0 text-base font-medium shadow-none focus-visible:ring-0 dark:text-gray-200"
-                                value={date}
-                                onChange={(e) =>
-                                    handleDateChange(e.target.value)
-                                }
-                            />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="flex h-8 items-center gap-3 bg-transparent p-0 text-base font-medium text-gray-500 outline-none hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                                    >
+                                        <CalendarIcon className="h-4 w-4" />
+                                        {selectedDate ? (
+                                            <span className="text-gray-900 dark:text-gray-200">
+                                                {format(
+                                                    selectedDate,
+                                                    'yyyy-MM-dd',
+                                                )}
+                                            </span>
+                                        ) : (
+                                            <span>Pilih tanggal</span>
+                                        )}
+                                    </button>
+                                </PopoverTrigger>
+
+                                <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                >
+                                    <Calendar
+                                        mode="single"
+                                        selected={selectedDate}
+                                        onSelect={(d) => {
+                                            if (!d) return;
+                                            handleDateChange(
+                                                format(d, 'yyyy-MM-dd'),
+                                            );
+                                        }}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
 
@@ -310,7 +347,10 @@ export default function ReportIndex({
                             className="h-10 gap-2 border-green-600 px-4 text-green-700 hover:bg-green-50 dark:border-green-800 dark:bg-zinc-800 dark:text-green-500 hover:dark:bg-green-900/20"
                             asChild
                         >
-                            <a href={route('laporan.export', { date: date })} target="_blank">
+                            <a
+                                href={route('laporan.export', { date: date })}
+                                target="_blank"
+                            >
                                 <Printer className="h-4 w-4" /> Export Excel
                             </a>
                         </Button>
@@ -485,14 +525,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesBca || 0) +
-                                            (ops?.bca_in || 0),
+                                                (ops?.bca_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyBca || 0) +
-                                            (ops?.bca_out || 0),
+                                                (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -525,14 +565,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesMandiri || 0) +
-                                            (ops?.mandiri_in || 0),
+                                                (ops?.mandiri_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyMandiri || 0) +
-                                            (ops?.mandiri_out || 0),
+                                                (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -598,9 +638,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesBca || 0) -
-                                            (mutations.buyBca || 0) +
-                                            (ops?.bca_in || 0) -
-                                            (ops?.bca_out || 0),
+                                                (mutations.buyBca || 0) +
+                                                (ops?.bca_in || 0) -
+                                                (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -614,9 +654,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesMandiri || 0) -
-                                            (mutations.buyMandiri || 0) +
-                                            (ops?.mandiri_in || 0) -
-                                            (ops?.mandiri_out || 0),
+                                                (mutations.buyMandiri || 0) +
+                                                (ops?.mandiri_in || 0) -
+                                                (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -881,8 +921,8 @@ export default function ReportIndex({
                                                                 ? 'border-gray-300 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
                                                                 : item.transaction_type ===
                                                                     'buy'
-                                                                    ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
-                                                                    : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
+                                                                  ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
+                                                                  : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
                                                         }
                                                     >
                                                         {item.transaction_type.toUpperCase()}
@@ -922,12 +962,13 @@ export default function ReportIndex({
                                                 </TableCell>
 
                                                 <TableCell
-                                                    className={`text-right font-bold ${['buy', 'out'].includes(
-                                                        item.transaction_type,
-                                                    )
-                                                        ? 'text-red-600 dark:text-red-500'
-                                                        : 'text-green-600 dark:text-green-500'
-                                                        }`}
+                                                    className={`text-right font-bold ${
+                                                        ['buy', 'out'].includes(
+                                                            item.transaction_type,
+                                                        )
+                                                            ? 'text-red-600 dark:text-red-500'
+                                                            : 'text-green-600 dark:text-green-500'
+                                                    }`}
                                                 >
                                                     {['buy', 'out'].includes(
                                                         item.transaction_type,
