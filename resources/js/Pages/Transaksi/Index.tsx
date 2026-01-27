@@ -42,6 +42,7 @@ import NotaTemplate1 from '../../Components/nota/NotaTemplate1';
 import NotaTemplate2 from '../../Components/nota/NotaTemplate2';
 import NotaTemplate4 from '../../Components/nota/NotaTemplate4';
 
+import InvoiceTemplate from '@/Components/InvoiceTemplate';
 import NotaTemplate3 from '@/Components/nota/NotaTemplate3';
 import { Separator } from '@/Components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
@@ -52,7 +53,6 @@ import { Head, useForm } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Printer, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import InvoiceTemplate from '@/Components/InvoiceTemplate';
 
 interface Props {
     currencies: Currency[];
@@ -582,17 +582,15 @@ export default function Transaksi({ currencies }: Props) {
                                     <Label className="mb-2 block">
                                         Jenis Transaksi
                                     </Label>
+
                                     <Tabs
-                                        value={String(template)}
-                                        onValueChange={(v) => {
-                                            const selected = Number(v) as
-                                                | 1
-                                                | 2
-                                                | 3
-                                                | 4;
-                                            setTemplate(selected);
-                                            setData('template_id', selected);
+                                        defaultValue="buy"
+                                        value={mode}
+                                        onValueChange={(val) => {
+                                            setMode(val as 'buy' | 'sell');
+                                            setData('type', val);
                                         }}
+                                        className="w-full"
                                     >
                                         <TabsList className="grid h-11 w-full grid-cols-2">
                                             <TabsTrigger
@@ -601,6 +599,7 @@ export default function Transaksi({ currencies }: Props) {
                                             >
                                                 BELI
                                             </TabsTrigger>
+
                                             <TabsTrigger
                                                 value="sell"
                                                 className="data-[state=active]:bg-orange-600 data-[state=active]:text-white"
