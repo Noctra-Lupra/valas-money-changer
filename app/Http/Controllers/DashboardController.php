@@ -26,8 +26,6 @@ class DashboardController extends Controller
         ];
 
         if ($todayClosing) {
-            // If shift matches today, the opening balance for the NEXT shift (or current view) 
-            // is the ENDING balance of the closed shift.
             $openingBalances = [
                 'cash' => $todayClosing->cash_ending_balance,
                 'bca' => $todayClosing->bca_ending_balance,
@@ -39,8 +37,8 @@ class DashboardController extends Controller
              $yesterdayGrandTotal = $todayClosing->grand_total;
         } else {
              // Shift Open
-             $transactions = Transactions::orderBy('id', 'ASC')
-                ->limit(10)
+             $transactions = Transactions::whereDate('created_at', $date)
+                ->orderBy('created_at', 'ASC')
                 ->get()
                 ->map(function ($trx) {
                     return [
@@ -60,15 +58,12 @@ class DashboardController extends Controller
              $yesterdayGrandTotal = $yesterdayClosing ? $yesterdayClosing->grand_total : 0;
 
              if ($yesterdayClosing) {
-                // If previous shift exists, its ENDING balance is today's OPENING balance
                 $openingBalances = [
                     'cash' => $yesterdayClosing->cash_ending_balance,
                     'bca' => $yesterdayClosing->bca_ending_balance,
                     'mandiri' => $yesterdayClosing->mandiri_ending_balance,
                 ];
              } else {
-                // Fallback for very first run or no history
-                // Provide aggregated balances from FinancialAccount as a starting point
                 $openingBalances = [
                     'cash' => $financialAccounts->where('type', 'cash')->sum('balance'),
                     'bca' => $financialAccounts->filter(fn($acc) => str_contains(strtolower($acc->type), 'bca'))->sum('balance'),
