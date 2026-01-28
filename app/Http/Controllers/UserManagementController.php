@@ -13,15 +13,38 @@ use Illuminate\Http\RedirectResponse;
 
 class UserManagementController extends Controller
 {
-    /**
-     * Display the settings page with users list.
-     */
     public function index(): Response
     {
+        $date = now()->toDateString();
+        $todayClosing = \App\Models\DailyClosing::where('report_date', $date)->first();
+        
+        $openingBalances = null;
+
+        if ($todayClosing) {
+            $openingBalances = [
+                'cash' => $todayClosing->cash_ending_balance,
+                'bca' => $todayClosing->bca_ending_balance,
+                'mandiri' => $todayClosing->mandiri_ending_balance,
+            ];
+        } else {
+             $yesterdayClosing = \App\Models\DailyClosing::where('report_date', '<', $date)
+                ->orderBy('report_date', 'desc')
+                ->first();
+
+             if ($yesterdayClosing) {
+                $openingBalances = [
+                    'cash' => $yesterdayClosing->cash_ending_balance,
+                    'bca' => $yesterdayClosing->bca_ending_balance,
+                    'mandiri' => $yesterdayClosing->mandiri_ending_balance,
+                ];
+             }
+        }
+
         return Inertia::render('Settings/Index', [
             'users' => User::orderBy('id', 'ASC')->get(),
             'financialAccounts' => FinancialAccount::where('is_active', true)->get(),
             'currencies' => \App\Models\Currencies::all(),
+            'openingBalances' => $openingBalances,
         ]);
     }
 
@@ -93,6 +116,29 @@ class UserManagementController extends Controller
 
         foreach ($request->accounts as $acc) {
             FinancialAccount::where('type', $acc['type'])->update(['balance' => $acc['balance']]);
+        }
+
+        $date = now()->toDateString();
+        $yesterdayClosing = \App\Models\DailyClosing::where('report_date', '<', $date)
+            ->orderBy('report_date', 'desc')
+            ->first();
+
+        if ($yesterdayClosing) {
+            $updates = [];
+            foreach ($request->accounts as $acc) {
+                $type = strtolower($acc['type']);
+                if ($type === 'cash') {
+                    $updates['cash_ending_balance'] = $acc['balance'];
+                } elseif ($type === 'bca') {
+                    $updates['bca_ending_balance'] = $acc['balance'];
+                } elseif ($type === 'mandiri') {
+                    $updates['mandiri_ending_balance'] = $acc['balance'];
+                }
+            }
+            
+            if (!empty($updates)) {
+                $yesterdayClosing->update($updates);
+            }
         }
 
         return redirect()->back();

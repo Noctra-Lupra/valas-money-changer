@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react'; // router added
+import { Head, useForm, router } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import {
     Card,
@@ -59,16 +59,30 @@ import {
     PopoverTrigger,
 } from "@/Components/ui/popover"
 
-export default function SettingIndex({ auth, users = [], financialAccounts = [], currencies = [] }: PageProps<{ users: User[], financialAccounts: FinancialAccount[], currencies: Currency[] }>) {
+export default function SettingIndex({ auth, users = [], financialAccounts = [], currencies = [], openingBalances }: PageProps<{ users: User[], financialAccounts: FinancialAccount[], currencies: Currency[], openingBalances?: { cash: number, bca: number, mandiri: number } | null }>) {
     const [activeTab, setActiveTab] = useState('financial');
 
     const { data: financialData, setData: setFinancialData, put: putFinancial, processing: processingFinancial } = useForm({
-        accounts: financialAccounts.length > 0 ? financialAccounts.map(acc => ({
-            type: acc.type,
-            balance: Number(acc.balance),
-            account_name: acc.account_name,
-            account_number: acc.account_number
-        })) : []
+        accounts: financialAccounts.length > 0 ? financialAccounts.map(acc => {
+            let initialBalance = Number(acc.balance);
+            if (openingBalances) {
+                const type = acc.type.toLowerCase();
+                if (type === 'cash' && openingBalances.cash !== undefined) {
+                    initialBalance = Number(openingBalances.cash);
+                } else if (type === 'bca' && openingBalances.bca !== undefined) {
+                    initialBalance = Number(openingBalances.bca);
+                } else if (type === 'mandiri' && openingBalances.mandiri !== undefined) {
+                    initialBalance = Number(openingBalances.mandiri);
+                }
+            }
+
+            return {
+                type: acc.type,
+                balance: initialBalance,
+                account_name: acc.account_name,
+                account_number: acc.account_number
+            };
+        }) : []
     });
 
     const handleFinancialChange = (index: number, val: string) => {
@@ -230,6 +244,9 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
                                     <div className="grid grid-cols-2 gap-4">
                                         {financialData.accounts.map((acc, index) => {
                                             if (acc.type === 'cash') return null;
+                                            // Hide bca2 and mandiri2 if requested
+                                            if (acc.type === 'bca2' || acc.type === 'mandiri2') return null;
+
                                             return (
                                                 <div key={acc.type} className="space-y-2">
                                                     <Label>{acc.account_name}</Label>
