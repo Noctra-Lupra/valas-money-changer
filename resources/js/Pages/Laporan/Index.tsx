@@ -306,7 +306,7 @@ export default function ReportIndex({
                                             <span className="text-gray-900 dark:text-gray-200">
                                                 {format(
                                                     selectedDate,
-                                                    'yyyy-MM-dd',
+                                                    'dd-MM-yyyy',
                                                 )}
                                             </span>
                                         ) : (
