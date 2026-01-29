@@ -508,12 +508,27 @@ class LaporanController extends Controller
                  }
              }
              
+             $cashAccountId = $accounts->first(fn($a) => $a->type === 'cash')?->id;
+
              $ops = \App\Models\OperationalEntry::whereDate('created_at', $date)->get();
              foreach ($ops as $op) {
+                 $accId = $op->financial_account_id;
+                 $amount = $op->amount;
+
+                 $ftype = isset($accounts[$accId]) ? strtolower($accounts[$accId]->type) : '';
+
                  if ($op->type == 'in') {
-                     $accountBalances[$op->financial_account_id] += $op->amount;
+                     $accountBalances[$accId] += $amount;
+                     
+                     if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
+                         $accountBalances[$cashAccountId] -= $amount;
+                     }
                  } else {
-                     $accountBalances[$op->financial_account_id] -= $op->amount;
+                     $accountBalances[$accId] -= $amount;
+
+                     if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
+                         $accountBalances[$cashAccountId] += $amount;
+                     }
                  }
              }
 
