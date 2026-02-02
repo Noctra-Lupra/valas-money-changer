@@ -21,9 +21,14 @@ export interface Transaction {
 }
 
 interface Props {
-    transaction: Transaction;
+    transaction: any;
     templateId: number;
     items: any[];
+    invoiceTemplate?: {
+        company_name: string;
+        address: string;
+        footer_note?: string; // ⬅️ WAJIB OPTIONAL
+    };
 }
 
 type LayoutItem = {
@@ -36,7 +41,21 @@ export default function InvoiceTemplate({
     transaction,
     templateId,
     items,
+    invoiceTemplate,
 }: Props) {
+    console.log('invoiceTemplate:', invoiceTemplate);
+
+    const companyName =
+        invoiceTemplate?.company_name || 'PT. MONEY CHANGER SEJAHTERA';
+
+    const companyAddress =
+        invoiceTemplate?.address ||
+        'Jl. Jendral Sudirman No. 88, Jakarta Pusat\nTelp: 021-555-9999';
+
+    const footerNote =
+        invoiceTemplate?.footer_note ||
+        'Terima kasih. Harap hitung kembali uang Anda sebelum meninggalkan kasir.';
+
     const formatIDR = (val: number) =>
         new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -180,18 +199,18 @@ export default function InvoiceTemplate({
                                 </div>
                                 <div>
                                     <h1 className="text-xl font-bold uppercase">
-                                        PT. MONEY CHANGER SEJAHTERA
+                                        {companyName}
                                     </h1>
                                     <p className="text-xs">
                                         Penukaran Valuta Asing
                                     </p>
-                                    <p className="text-xs">
-                                        Jl. Jendral Sudirman No. 88, Jakarta
-                                        Pusat
-                                    </p>
-                                    <p className="text-xs">
-                                        Telp: 021-555-9999
-                                    </p>
+                                    {companyAddress
+                                        .split('\n')
+                                        .map((line, idx) => (
+                                            <p key={idx} className="text-xs">
+                                                {line}
+                                            </p>
+                                        ))}
                                 </div>
                             </div>
 
@@ -284,7 +303,7 @@ export default function InvoiceTemplate({
             <div className="w-full border border-black bg-white p-4 font-mono text-sm text-black">
                 <div className="mb-6 text-center">
                     <h1 className="text-2xl font-bold">USD RECEIPT</h1>
-                    <p>PT. MONEY CHANGER SEJAHTERA</p>
+                    <p>{companyName}</p>
                     <p>USD SPECIAL TRANSACTION</p>
                 </div>
 
@@ -399,15 +418,13 @@ export default function InvoiceTemplate({
                 <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4">
                     <div>
                         <h1 className="text-xl font-bold uppercase tracking-wide">
-                            PT. MONEY CHANGER SEJAHTERA
+                            {companyName}
                         </h1>
-                        <p className="text-xs text-gray-500">
-                            Penukaran Valuta Asing • Jl. Jendral Sudirman No.
-                            88, Jakarta Pusat
-                        </p>
-                        <p className="text-xs text-gray-500">
-                            Telp: 021-555-9999
-                        </p>
+                        {companyAddress.split('\n').map((line, idx) => (
+                            <p key={idx} className="text-xs text-gray-500">
+                                {line}
+                            </p>
+                        ))}
                     </div>
 
                     <div className="text-right">
@@ -505,8 +522,9 @@ export default function InvoiceTemplate({
                     </div>
 
                     <div className="text-right text-xs text-gray-500">
-                        <p>Terima kasih 🙏</p>
-                        <p>Harap simpan nota ini sebagai bukti transaksi</p>
+                        {/* <p>Terima kasih 🙏</p>
+                        <p>Harap simpan nota ini sebagai bukti transaksi</p> */}
+                        {footerNote}
                     </div>
                 </div>
 
