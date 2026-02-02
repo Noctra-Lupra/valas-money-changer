@@ -208,13 +208,16 @@ class LaporanController extends Controller
                         $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                     }
                 }
-                elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
+                elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                     if (Str::contains($ftype, 'bca')) {
                         if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['bca_out'] += $amt;
-                    } else {
+                    } elseif (Str::contains($ftype, 'mandiri')) {
                         if ($op->type === 'in') $opsSummary['mandiri_in'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
+                    } elseif ($ftype === 'cash2') {
+                         if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
+                         else $opsSummary['cash_out'] += $amt;
                     }
 
                     if ($op->type === 'in') {
@@ -371,13 +374,16 @@ class LaporanController extends Controller
                     $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                 }
             }
-            elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
+            elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                 if (Str::contains($ftype, 'bca')) {
                     if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['bca_out'] += $amt;
-                } else {
+                } elseif (Str::contains($ftype, 'mandiri')) {
                     if ($op->type === 'in') $opsSummary['mandiri_in'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
+                } elseif ($ftype === 'cash2') {
+                    if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
+                    else $opsSummary['cash_out'] += $amt;
                 }
 
                 if ($op->type === 'in') $opsSummary['ghost_adjustment'] -= $amt;
@@ -415,13 +421,16 @@ class LaporanController extends Controller
                     $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                 }
             }
-            elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
+            elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                  if (Str::contains($ftype, 'bca')) {
                     if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['bca_out'] += $amt;
-                } else {
+                } elseif (Str::contains($ftype, 'mandiri')) {
                     if ($op->type === 'in') $opsSummary['mandiri_in'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
+                } elseif ($ftype === 'cash2') {
+                    if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
+                    else $opsSummary['cash_out'] += $amt;
                 }
                 
                 if ($op->type === 'in') $opsSummary['ghost_adjustment'] -= $amt;
@@ -482,7 +491,7 @@ class LaporanController extends Controller
         DB::transaction(function () use ($date, $saldoAwalCash, $mutations, $saldoAkhirKas,
                                          $saldoAwalBca, $saldoAkhirBca, $saldoAwalMandiri, 
                                          $saldoAkhirMandiri, $grandTotal, $netProfit, 
-                                         $totalAssetValas, $opsSummary, $manualAdjustmentFromYesterday) {
+                                         $totalAssetValas, $opsSummary, $manualAdjustmentFromYesterday, $totalSaldoAkhir) {
     
             DailyClosing::create([
                 'report_date' => $date,
@@ -504,7 +513,7 @@ class LaporanController extends Controller
                 'total_buy_transaction' => $mutations['buyCash'] + $mutations['buyBca'] + $mutations['buyMandiri'],
                 'total_sales_transaction' => $mutations['salesCash'] + $mutations['salesBca'] + $mutations['salesMandiri'],
                 
-                'total_money_balance' => $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $manualAdjustmentFromYesterday, 
+                'total_money_balance' => $totalSaldoAkhir, 
                 
                 'total_valas_balance' => $totalAssetValas,
                 'grand_total' => $grandTotal,
@@ -571,6 +580,7 @@ class LaporanController extends Controller
             'bca2' => 'bca2',
             'mandiri' => 'mandiri',
             'mandiri2' => 'mandiri2',
+            'cash2' => 'cash2',
             default => 'cash',
         };
 
@@ -818,13 +828,16 @@ class LaporanController extends Controller
                         $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                     }
                 }
-                elseif (in_array($ftype, ['bca2', 'mandiri2'])) {
+                elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                     if (Str::contains($ftype, 'bca')) {
                         if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['bca_out'] += $amt;
-                    } else {
+                    } elseif (Str::contains($ftype, 'mandiri')) {
                         if ($op->type === 'in') $opsSummary['mandiri_in'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
+                    } elseif ($ftype === 'cash2') {
+                        if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
+                        else $opsSummary['cash_out'] += $amt;
                     }
 
                     if ($op->type === 'in') {
