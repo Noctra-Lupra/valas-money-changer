@@ -9,7 +9,6 @@ import {
 } from '@/Components/ui/card';
 import {
     Command,
-    CommandEmpty,
     CommandGroup,
     CommandInput,
     CommandItem,
@@ -686,7 +685,7 @@ export default function Transaksi({ currencies }: Props) {
                                             align="start"
                                             avoidCollisions={false}
                                         >
-                                            <Command>
+                                            <Command shouldFilter={false}>
                                                 <CommandInput
                                                     placeholder="Cari valas..."
                                                     className="h-9"
@@ -697,13 +696,16 @@ export default function Transaksi({ currencies }: Props) {
                                                 />
 
                                                 <CommandList>
-                                                    <CommandEmpty>
-                                                        Valas tidak ditemukan.
-                                                    </CommandEmpty>
-
                                                     <CommandGroup>
-                                                        {localCurrencies.map(
-                                                            (curr) => (
+                                                        {localCurrencies
+                                                            .filter((curr) =>
+                                                                curr.code
+                                                                    .toLowerCase()
+                                                                    .includes(
+                                                                        searchCurrency.toLowerCase(),
+                                                                    ),
+                                                            )
+                                                            .map((curr) => (
                                                                 <CommandItem
                                                                     key={
                                                                         curr.id
@@ -735,8 +737,7 @@ export default function Transaksi({ currencies }: Props) {
                                                                     />
                                                                     {curr.code}
                                                                 </CommandItem>
-                                                            ),
-                                                        )}
+                                                            ))}
 
                                                         {searchCurrency &&
                                                             !localCurrencies.some(
