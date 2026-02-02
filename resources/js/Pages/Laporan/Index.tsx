@@ -13,6 +13,7 @@ import {
 } from '@/Components/ui/alert-dialog';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/Components/ui/calendar';
 import {
     Card,
     CardContent,
@@ -22,6 +23,11 @@ import {
 } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/Components/ui/popover';
 import {
     Select,
     SelectContent,
@@ -41,6 +47,7 @@ import {
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps, ReportData } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
+import { format } from 'date-fns';
 import {
     ArrowDownRight,
     ArrowRightLeft,
@@ -57,9 +64,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import { format } from 'date-fns';
-import { Calendar } from '@/Components/ui/calendar';
 
 interface ExtendedReportData extends ReportData {
     totals: {
@@ -110,28 +114,28 @@ export default function ReportIndex({
     const saldoAkhirKas =
         reportData.saldo_akhir?.cash ??
         (saldo_awal.cash || 0) +
-        (mutations.salesCash || 0) -
-        (mutations.buyCash || 0) +
-        (ops?.cash_in || 0) -
-        (ops?.cash_out || 0) +
-        (ops?.transfer_from_bank_to_cash || 0) -
-        (ops?.transfer_to_bank || 0);
+            (mutations.salesCash || 0) -
+            (mutations.buyCash || 0) +
+            (ops?.cash_in || 0) -
+            (ops?.cash_out || 0) +
+            (ops?.transfer_from_bank_to_cash || 0) -
+            (ops?.transfer_to_bank || 0);
 
     const saldoAkhirBca =
         reportData.saldo_akhir?.bca ??
         (saldo_awal.bca || 0) +
-        (mutations.salesBca || 0) -
-        (mutations.buyBca || 0) +
-        (ops?.bca_in || 0) -
-        (ops?.bca_out || 0);
+            (mutations.salesBca || 0) -
+            (mutations.buyBca || 0) +
+            (ops?.bca_in || 0) -
+            (ops?.bca_out || 0);
 
     const saldoAkhirMandiri =
         reportData.saldo_akhir?.mandiri ??
         (saldo_awal.mandiri || 0) +
-        (mutations.salesMandiri || 0) -
-        (mutations.buyMandiri || 0) +
-        (ops?.mandiri_in || 0) -
-        (ops?.mandiri_out || 0);
+            (mutations.salesMandiri || 0) -
+            (mutations.buyMandiri || 0) +
+            (ops?.mandiri_in || 0) -
+            (ops?.mandiri_out || 0);
 
     const totalSaldoAkhir = totals.total_money;
 
@@ -205,16 +209,32 @@ export default function ReportIndex({
     };
 
     const handleEndShift = () => {
-        router.post(
-            route('laporan.end-shift'),
-            {},
-            {
-                preserveState: false,
-                onError: (errors: any) => {
-                    toast.error(errors.message || 'Gagal menutup shift');
+        const exportUrl = route('laporan.export', { date });
+
+        const link = document.createElement('a');
+        link.href = exportUrl;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            router.post(
+                route('laporan.end-shift'),
+                {},
+                {
+                    preserveState: false,
+                    onSuccess: () => {
+                        toast.success(
+                            'Shift ditutup & laporan berhasil diexport',
+                        );
+                    },
+                    onError: (errors: any) => {
+                        toast.error(errors.message || 'Gagal menutup shift');
+                    },
                 },
-            },
-        );
+            );
+        }, 500); 
     };
 
     const [deleteId, setDeleteId] = useState<string | number | null>(null);
@@ -342,7 +362,7 @@ export default function ReportIndex({
                         >
                             <Printer className="h-4 w-4" /> Cetak
                         </Button> */}
-                        <Button
+                        {/* <Button
                             variant="outline"
                             className="h-10 gap-2 border-green-600 px-4 text-green-700 hover:bg-green-50 dark:border-green-800 dark:bg-zinc-800 dark:text-green-500 hover:dark:bg-green-900/20"
                             asChild
@@ -353,7 +373,7 @@ export default function ReportIndex({
                             >
                                 <Printer className="h-4 w-4" /> Export Excel
                             </a>
-                        </Button>
+                        </Button> */}
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button
@@ -525,14 +545,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesBca || 0) +
-                                            (ops?.bca_in || 0),
+                                                (ops?.bca_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyBca || 0) +
-                                            (ops?.bca_out || 0),
+                                                (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -565,14 +585,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesMandiri || 0) +
-                                            (ops?.mandiri_in || 0),
+                                                (ops?.mandiri_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyMandiri || 0) +
-                                            (ops?.mandiri_out || 0),
+                                                (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -638,9 +658,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesBca || 0) -
-                                            (mutations.buyBca || 0) +
-                                            (ops?.bca_in || 0) -
-                                            (ops?.bca_out || 0),
+                                                (mutations.buyBca || 0) +
+                                                (ops?.bca_in || 0) -
+                                                (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -654,9 +674,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesMandiri || 0) -
-                                            (mutations.buyMandiri || 0) +
-                                            (ops?.mandiri_in || 0) -
-                                            (ops?.mandiri_out || 0),
+                                                (mutations.buyMandiri || 0) +
+                                                (ops?.mandiri_in || 0) -
+                                                (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -924,8 +944,8 @@ export default function ReportIndex({
                                                                 ? 'border-gray-300 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
                                                                 : item.transaction_type ===
                                                                     'buy'
-                                                                    ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
-                                                                    : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
+                                                                  ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
+                                                                  : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
                                                         }
                                                     >
                                                         {item.transaction_type.toUpperCase()}
