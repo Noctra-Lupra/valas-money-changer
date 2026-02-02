@@ -59,7 +59,7 @@ import {
     PopoverTrigger,
 } from "@/Components/ui/popover"
 
-export default function SettingIndex({ auth, users = [], financialAccounts = [], currencies = [], openingBalances }: PageProps<{ users: User[], financialAccounts: FinancialAccount[], currencies: Currency[], openingBalances?: { cash: number, bca: number, mandiri: number } | null }>) {
+export default function SettingIndex({ auth, users = [], financialAccounts = [], currencies = [], openingBalances, yesterdayGrandTotal = 0, yesterdayTotalMoneyBalance = 0 }: PageProps<{ users: User[], financialAccounts: FinancialAccount[], currencies: Currency[], openingBalances?: { cash: number, bca: number, mandiri: number } | null, yesterdayGrandTotal?: number, yesterdayTotalMoneyBalance?: number }>) {
     const [activeTab, setActiveTab] = useState('financial');
 
     const { data: financialData, setData: setFinancialData, put: putFinancial, processing: processingFinancial } = useForm({
@@ -82,7 +82,9 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
                 account_name: acc.account_name,
                 account_number: acc.account_number
             };
-        }) : []
+        }) : [],
+        grand_total: yesterdayGrandTotal,
+        total_money_balance: yesterdayTotalMoneyBalance
     });
 
     const handleFinancialChange = (index: number, val: string) => {
@@ -90,6 +92,11 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
         const clean = val.replace(/[^0-9]/g, '');
         newAccounts[index].balance = Number(clean);
         setFinancialData('accounts', newAccounts);
+    };
+
+    const handleGrandTotalChange = (val: string) => {
+        const clean = val.replace(/[^0-9]/g, '');
+        setFinancialData('grand_total', Number(clean));
     };
 
     const submitFinancial = () => {
@@ -262,6 +269,65 @@ export default function SettingIndex({ auth, users = [], financialAccounts = [],
                                 <CardFooter>
                                     <Button onClick={submitFinancial} disabled={processingFinancial}>Update Saldo Bank</Button>
                                 </CardFooter>
+                            </Card>
+
+                            <Card className="">
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-lg">Total Saldo Akhir Uang</CardTitle>
+                                            <CardDescription>Input manual untuk override Total Saldo Akhir tanpa mengubah rincian saldo.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-col gap-2">
+                                        <Label>Total Saldo Akhir (Manual Override)</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                className="text-lg font-bold"
+                                                value={formatNumber(financialData.total_money_balance)}
+                                                onChange={(e) => {
+                                                    const clean = e.target.value.replace(/[^0-9]/g, '');
+                                                    setFinancialData('total_money_balance', Number(clean));
+                                                }}
+                                            />
+                                            <Button onClick={submitFinancial} disabled={processingFinancial}>
+                                                Update Total Saldo Akhir
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-lg">Total Aset (Grand Total)</CardTitle>
+                                            <CardDescription>Input manual untuk override Grand Total.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-col gap-2">
+                                        <Label className="">Grand Total Awal (Manual Override)</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                className="text-lg font-bold"
+                                                value={formatNumber(financialData.grand_total)}
+                                                onChange={(e) => handleGrandTotalChange(e.target.value)}
+                                            />
+                                            <Button onClick={submitFinancial} disabled={processingFinancial}>Update Grandtotal</Button>
+                                        </div>
+                                        {/* <p className="text-xs text-muted-foreground">
+                                            Estimasi System: {formatNumber(
+                                                financialData.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0) +
+                                                currencies.reduce((sum, curr) => sum + (Number(curr.stock_amount || 0) * Number(curr.average_rate || 0)), 0)
+                                            )}
+                                        </p> */}
+                                    </div>
+                                </CardContent>
                             </Card>
                         </div>
                     )}

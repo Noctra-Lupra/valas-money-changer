@@ -449,7 +449,22 @@ class LaporanController extends Controller
             + $opsSummary['mandiri_in'] 
             - $opsSummary['mandiri_out'];
 
-        $totalSaldoAkhir = $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $opsSummary['ghost_adjustment'];
+        $yesterdayClosingCheck = DailyClosing::where('report_date', '<', $date)
+             ->orderBy('report_date', 'desc')
+             ->first();
+        
+        $manualAdjustmentFromYesterday = 0;
+        if ($yesterdayClosingCheck) {
+             $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance + 
+                                         $yesterdayClosingCheck->bca_ending_balance + 
+                                         $yesterdayClosingCheck->mandiri_ending_balance;
+             
+             if ($yesterdayClosingCheck->total_money_balance != 0) {
+                 $manualAdjustmentFromYesterday = $yesterdayClosingCheck->total_money_balance - $calculatedYesterdayTotal;
+             }
+        }
+
+        $totalSaldoAkhir = $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $opsSummary['ghost_adjustment'] + $manualAdjustmentFromYesterday;
         
         $totalAssetValas = \App\Models\Currencies::all()->sum(function ($currency) {
             return $currency->stock_amount * $currency->average_rate;
@@ -467,7 +482,7 @@ class LaporanController extends Controller
         DB::transaction(function () use ($date, $saldoAwalCash, $mutations, $saldoAkhirKas,
                                          $saldoAwalBca, $saldoAkhirBca, $saldoAwalMandiri, 
                                          $saldoAkhirMandiri, $grandTotal, $netProfit, 
-                                         $totalAssetValas, $opsSummary) {
+                                         $totalAssetValas, $opsSummary, $manualAdjustmentFromYesterday) {
     
             DailyClosing::create([
                 'report_date' => $date,
@@ -489,7 +504,7 @@ class LaporanController extends Controller
                 'total_buy_transaction' => $mutations['buyCash'] + $mutations['buyBca'] + $mutations['buyMandiri'],
                 'total_sales_transaction' => $mutations['salesCash'] + $mutations['salesBca'] + $mutations['salesMandiri'],
                 
-                'total_money_balance' => $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri, 
+                'total_money_balance' => $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $manualAdjustmentFromYesterday, 
                 
                 'total_valas_balance' => $totalAssetValas,
                 'grand_total' => $grandTotal,
@@ -711,11 +726,11 @@ class LaporanController extends Controller
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; // RESTORED
+                        $opsSummary['transfer_to_bank'] += $amt; 
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; // RESTORED
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
                     }
                 }
             }
@@ -830,8 +845,39 @@ class LaporanController extends Controller
             $saldoAkhirKas = $saldoAwalCash + $mutations['salesCash'] - $mutations['buyCash'] + $opsSummary['cash_in'] - $opsSummary['cash_out'] + $opsSummary['transfer_from_bank_to_cash'] - $opsSummary['transfer_to_bank'];
             $saldoAkhirBca = $saldoAwalBca + $mutations['salesBca'] - $mutations['buyBca'] + $opsSummary['bca_in'] - $opsSummary['bca_out'];
             $saldoAkhirMandiri = $saldoAwalMandiri + $mutations['salesMandiri'] - $mutations['buyMandiri'] + $opsSummary['mandiri_in'] - $opsSummary['mandiri_out'];
-            $totalSaldoAkhir = $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $opsSummary['ghost_adjustment'];
+            $yesterdayClosingCheck = DailyClosing::where('report_date', '<', $date)
+                ->orderBy('report_date', 'desc')
+                ->first();
+            
+            $manualAdjustmentFromYesterday = 0;
+            if ($yesterdayClosingCheck) {
+                $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance + 
+                                            $yesterdayClosingCheck->bca_ending_balance + 
+                                            $yesterdayClosingCheck->mandiri_ending_balance;
+                
+                if ($yesterdayClosingCheck->total_money_balance != 0) {
+                    $manualAdjustmentFromYesterday = $yesterdayClosingCheck->total_money_balance - $calculatedYesterdayTotal;
+                }
+            }
+
+            $totalSaldoAkhir = $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $opsSummary['ghost_adjustment'] + $manualAdjustmentFromYesterday;
             $grandTotalHariIni = $totalSaldoAkhir + $totalAssetValas;
+
+            $yesterdayClosing = DailyClosing::where('report_date', '<', $date)
+                ->orderBy('report_date', 'desc')
+                ->first();
+            $yesterdayGrandTotal = $grandTotalHariIni - ($dailyClosing->net_profit ?? 0); 
+
+            if (!$dailyClosing) {
+                 $yesterdayGrandTotalForProfit = $yesterdayClosing ? $yesterdayClosing->grand_total : 0;
+                 $netProfit = $grandTotalHariIni - $yesterdayGrandTotalForProfit;
+                 $reportData['net_profit'] = $netProfit;
+            }
+
+            $reportData['totals']['total_money'] = $totalSaldoAkhir;
+            $reportData['totals']['adjustment'] = $opsSummary['ghost_adjustment'] + $manualAdjustmentFromYesterday;
+            
+            $reportData['grand_total'] = $grandTotalHariIni;
 
             $yesterdayClosing = DailyClosing::where('report_date', '<', $date)
                 ->orderBy('report_date', 'desc')
