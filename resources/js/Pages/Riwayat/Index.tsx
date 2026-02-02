@@ -4,6 +4,8 @@ import { DateRange } from 'react-day-picker';
 
 import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
 import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/Components/ui/calendar';
 import {
     Card,
     CardContent,
@@ -35,8 +37,6 @@ import {
     TableRow,
 } from '@/Components/ui/table';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/Components/ui/calendar';
 import { Head, Link, router } from '@inertiajs/react';
 import { CalendarIcon, Eye, Printer, Search } from 'lucide-react';
 
@@ -53,6 +53,11 @@ import { PaginatedData } from '@/types';
 interface Props {
     transactions: PaginatedData<Transaction>;
     notaLayouts: any[];
+    invoiceTemplate?: {
+        company_name: string;
+        address: string;
+        footer_note?: string;
+    };
     filters: {
         search?: string;
         type?: string;
@@ -65,6 +70,7 @@ export default function RiwayatIndex({
     transactions,
     filters,
     notaLayouts,
+    invoiceTemplate,
 }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
@@ -371,6 +377,9 @@ export default function RiwayatIndex({
                                                                         transaction.template_id ??
                                                                             1,
                                                                     )}
+                                                                    invoiceTemplate={
+                                                                        invoiceTemplate
+                                                                    }
                                                                 />
                                                             </div>
 

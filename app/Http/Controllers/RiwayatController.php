@@ -7,6 +7,7 @@ use App\Models\NotaLayout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
+use App\Models\InvoiceTemplate;
 
 class RiwayatController extends Controller
 {
@@ -94,6 +95,8 @@ class RiwayatController extends Controller
 
         return Inertia::render('Riwayat/Index', [
             'transactions' => $transactions,
+            'notaLayouts'      => $notaLayouts,
+            'invoiceTemplate'  => InvoiceTemplate::first(),
             'filters' => $request->only([
                 'search',
                 'type',
@@ -134,6 +137,7 @@ class RiwayatController extends Controller
         return Inertia::render('Riwayat/Print', [
             'transaction' => $transaction,
             'notaLayouts' => $notaLayouts,
+            'invoiceTemplate' => InvoiceTemplate::first(),
         ]);
     }
 }

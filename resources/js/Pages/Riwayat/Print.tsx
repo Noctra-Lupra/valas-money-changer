@@ -5,9 +5,20 @@ import { useEffect } from 'react';
 interface Props {
     transaction: Transaction;
     items?: any[]; // ⬅️ kalau template 4 butuh custom layout items
+    notaLayouts: any[];
+    invoiceTemplate: {
+        company_name: string;
+        address: string;
+        footer_note?: string;
+    };
 }
 
-export default function Print({ transaction, items = [] }: Props) {
+export default function Print({
+    transaction,
+    items = [],
+    notaLayouts,
+    invoiceTemplate,
+}: Props) {
     useEffect(() => {
         const t = setTimeout(() => window.print(), 300);
         return () => clearTimeout(t);
@@ -24,6 +35,7 @@ export default function Print({ transaction, items = [] }: Props) {
                     templateId={transaction.template_id ?? 1}
                     // ⬅️ ikut template transaksi
                     items={items} // ⬅️ kalau template 4
+                    invoiceTemplate={invoiceTemplate}
                 />
             </div>
 

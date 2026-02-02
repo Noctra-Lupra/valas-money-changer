@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InvoiceTemplateController;
 use App\Http\Controllers\NotaLayoutController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReceiptTemplateController;
@@ -42,6 +43,12 @@ Route::delete('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 
 
 Route::get('/riwayat', [\App\Http\Controllers\RiwayatController::class, 'index'])->middleware(['auth', 'verified'])->name('riwayat.index');
 Route::get('/riwayat/{transaction}/print', [\App\Http\Controllers\RiwayatController::class, 'print'])->middleware(['auth', 'verified'])->name('riwayat.print');
+
+Route::put('/settings/invoice-template', [InvoiceTemplateController::class, 'update'])
+    ->name('invoice-template.update');
+
+Route::get('/invoice/{transaction}', [InvoiceTemplateController::class, 'show']);
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/settings', [UserManagementController::class, 'index'])->name('settings');

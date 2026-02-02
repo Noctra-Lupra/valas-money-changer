@@ -21,7 +21,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/Components/ui/dialog';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
@@ -331,6 +331,13 @@ const initialItems = [
 ];
 
 export default function Transaksi({ currencies }: Props) {
+    const { invoiceTemplate } = usePage().props as {
+        invoiceTemplate?: {
+            company_name: string;
+            address: string;
+            footer_note?: string;
+        };
+    };
     const [selectedCurrency, setSelectedCurrency] = useState<Currency | null>(
         currencies[0] ?? null,
     );
@@ -634,7 +641,7 @@ export default function Transaksi({ currencies }: Props) {
                                         onValueChange={(val) =>
                                             setData('payment_method', val)
                                         }
-                                        value={data.payment_method}
+                                        defaultValue={data.payment_method}
                                     >
                                         <SelectTrigger className="h-11">
                                             <SelectValue placeholder="Metode" />
@@ -909,6 +916,7 @@ export default function Transaksi({ currencies }: Props) {
                         }}
                         templateId={template}
                         items={templateLayouts[template]}
+                        invoiceTemplate={invoiceTemplate}
                     />
 
                     <div className="mt-4 flex justify-end">
