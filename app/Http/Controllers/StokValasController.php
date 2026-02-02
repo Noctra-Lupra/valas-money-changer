@@ -35,4 +35,12 @@ class StokValasController extends Controller
 
         return redirect()->back()->with('success', 'Valas baru berhasil ditambahkan.');
     }
+
+    public function destroy($id)
+    {
+        $currency = Currencies::findOrFail($id);
+        $currency->delete();
+
+        return redirect()->back()->with('success', 'Valas berhasil dihapus.');
+    }
 }

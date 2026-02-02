@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import {
     Card,
@@ -64,6 +64,28 @@ interface Props {
 export default function StockValas({ stocks }: Props) {
     const [search, setSearch] = useState('');
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+    const openDelete = (id: number) => {
+        setDeleteId(id);
+        setIsDeleteOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (deleteId) {
+            router.delete(route('stok-valas.destroy', deleteId), {
+                onSuccess: () => {
+                    setIsDeleteOpen(false);
+                    setDeleteId(null);
+                    toast.success('Valas berhasil dihapus.');
+                },
+                onError: () => {
+                    toast.error('Gagal menghapus valas.');
+                }
+            });
+        }
+    };
 
     const filteredStocks = useMemo(() => {
         return stocks.filter((item) =>
@@ -225,6 +247,7 @@ export default function StockValas({ stocks }: Props) {
                                         <TableHead className="text-right">Rata-rata Modal</TableHead>
                                         <TableHead className="text-right">Total Nilai</TableHead>
                                         <TableHead className="text-center w-[120px]">Last Update</TableHead>
+                                        <TableHead className="text-center w-[80px]">Aksi</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -253,6 +276,16 @@ export default function StockValas({ stocks }: Props) {
                                                         <span className="text-[15px] text-red-500 font-bold">Habis</span>
                                                     )}
                                                 </TableCell>
+                                                <TableCell className="text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-red-500 hover:text-red-700"
+                                                        onClick={() => openDelete(item.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -271,6 +304,22 @@ export default function StockValas({ stocks }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Hapus Valas?</DialogTitle>
+                        <DialogDescription>
+                            Apakah Anda yakin ingin menghapus data valas ini? Tindakan ini tidak dapat dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Batal</Button>
+                        <Button variant="destructive" onClick={confirmDelete}>Hapus</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </AuthenticatedLayout>
     );
 }
