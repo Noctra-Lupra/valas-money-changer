@@ -21,19 +21,35 @@ class LaporanController extends Controller
     {
         $dateParam = $request->input('date');
         $today = now()->toDateString();
-        
-        if (!$dateParam && DailyClosing::where('report_date', $today)->exists()) {
-             $date = now()->addDay()->toDateString();
-        } else {
-             $date = $dateParam ?? $today;
-        }
-        
+
+        $date = $dateParam ?? $today;
+
         $dailyClosing = DailyClosing::where('report_date', $date)->first();
+
+        // ❌ BLOK export hari ini jika belum end shift
+        if ($date === $today && !$dailyClosing) {
+            abort(403, 'Shift hari ini belum ditutup. Silakan end shift terlebih dahulu.');
+        }
+
+        // ❌ BLOK export ulang hari ini setelah end shift
+        if ($date === $today && $dailyClosing) {
+            abort(403, 'Shift hari ini sudah ditutup dan tidak bisa export ulang.');
+        }
+
+        // ❌ BLOK tanggal lama yang BELUM pernah ditutup
+        if ($date < $today && !$dailyClosing) {
+            abort(403, 'Laporan tanggal ini belum ditutup.');
+        }
+
+        if ($date->isFuture()) {
+            abort(403, 'Tidak bisa export laporan untuk tanggal mendatang');
+        }
+
 
         $todaysTransactions = Transactions::with(['user', 'currency', 'financialAccount'])
             ->whereDate('created_at', $date)
             ->get();
-     
+
         $opsEntries = \App\Models\OperationalEntry::with('financialAccount')
             ->whereDate('created_at', $date)
             ->get();
@@ -85,29 +101,31 @@ class LaporanController extends Controller
 
         if ($dailyClosing) {
             $opsSummary = [
-                'cash_in' => 0, 'cash_out' => 0,
-                'bca_in' => 0, 'bca_out' => 0,
-                'mandiri_in' => 0, 'mandiri_out' => 0,
-                'transfer_from_bank_to_cash' => 0, 
+                'cash_in' => 0,
+                'cash_out' => 0,
+                'bca_in' => 0,
+                'bca_out' => 0,
+                'mandiri_in' => 0,
+                'mandiri_out' => 0,
+                'transfer_from_bank_to_cash' => 0,
                 'transfer_to_bank' => 0,
-                'ghost_adjustment' => 0, 
+                'ghost_adjustment' => 0,
             ];
             foreach ($opsEntries as $op) {
                 $amt = (float) $op->amount;
-                $ftype = $op->financialAccount->type; 
+                $ftype = $op->financialAccount->type;
                 if ($ftype === 'cash') {
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                     else $opsSummary['cash_out'] += $amt;
-                } 
-                elseif (in_array($ftype, ['bca', 'mandiri'])) {
+                } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; 
+                        $opsSummary['transfer_to_bank'] += $amt;
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt;
                     }
                 }
             }
@@ -119,9 +137,9 @@ class LaporanController extends Controller
                     'mandiri' => $dailyClosing->mandiri_opening_balance,
                 ],
                 'mutations' => [
-                    'salesCash' => $dailyClosing->cash_sales, 
+                    'salesCash' => $dailyClosing->cash_sales,
                     'buyCash' => $dailyClosing->cash_buy,
-                    'salesBca' => ($dailyClosing->bca_mutation_in - $opsSummary['bca_in']), 
+                    'salesBca' => ($dailyClosing->bca_mutation_in - $opsSummary['bca_in']),
                     'buyBca' => ($dailyClosing->bca_mutation_out - $opsSummary['bca_out']),
                     'salesMandiri' => ($dailyClosing->mandiri_mutation_in - $opsSummary['mandiri_in']),
                     'buyMandiri' => ($dailyClosing->mandiri_mutation_out - $opsSummary['mandiri_out']),
@@ -141,7 +159,6 @@ class LaporanController extends Controller
                 'grand_total' => $dailyClosing->grand_total,
                 'net_profit' => $dailyClosing->net_profit,
             ];
-
         } else {
             $prevDate = \Carbon\Carbon::parse($date)->subDay()->toDateString();
             $prevClosing = DailyClosing::where('report_date', $prevDate)->first();
@@ -158,16 +175,19 @@ class LaporanController extends Controller
             }
 
             $mutations = [
-                'salesCash' => 0, 'buyCash' => 0,
-                'salesBca' => 0, 'buyBca' => 0,
-                'salesMandiri' => 0, 'buyMandiri' => 0,
+                'salesCash' => 0,
+                'buyCash' => 0,
+                'salesBca' => 0,
+                'buyBca' => 0,
+                'salesMandiri' => 0,
+                'buyMandiri' => 0,
             ];
 
             foreach ($todaysTransactions as $trx) {
                 $nominal = (float) $trx->total_idr;
                 $type = $trx->type;
                 $accountType = $trx->financialAccount ? strtolower($trx->financialAccount->type) : '';
-                
+
                 if ($accountType === 'cash') {
                     if ($type === 'sell') $mutations['salesCash'] += $nominal;
                     if ($type === 'buy') $mutations['buyCash'] += $nominal;
@@ -181,12 +201,15 @@ class LaporanController extends Controller
             }
 
             $opsSummary = [
-                'cash_in' => 0, 'cash_out' => 0,
-                'bca_in' => 0, 'bca_out' => 0,
-                'mandiri_in' => 0, 'mandiri_out' => 0,
-                'transfer_from_bank_to_cash' => 0, 
+                'cash_in' => 0,
+                'cash_out' => 0,
+                'bca_in' => 0,
+                'bca_out' => 0,
+                'mandiri_in' => 0,
+                'mandiri_out' => 0,
+                'transfer_from_bank_to_cash' => 0,
                 'transfer_to_bank' => 0,
-                'ghost_adjustment' => 0, 
+                'ghost_adjustment' => 0,
             ];
 
             foreach ($opsEntries as $op) {
@@ -196,19 +219,17 @@ class LaporanController extends Controller
                 if ($ftype === 'cash') {
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                     else $opsSummary['cash_out'] += $amt;
-                } 
-                elseif (in_array($ftype, ['bca', 'mandiri'])) {
+                } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; 
+                        $opsSummary['transfer_to_bank'] += $amt;
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt;
                     }
-                }
-                elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
+                } elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                     if (Str::contains($ftype, 'bca')) {
                         if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['bca_out'] += $amt;
@@ -216,8 +237,8 @@ class LaporanController extends Controller
                         if ($op->type === 'in') $opsSummary['mandiri_in'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
                     } elseif ($ftype === 'cash2') {
-                         if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
-                         else $opsSummary['cash_out'] += $amt;
+                        if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
+                        else $opsSummary['cash_out'] += $amt;
                     }
 
                     if ($op->type === 'in') {
@@ -273,7 +294,7 @@ class LaporanController extends Controller
 
         $buys = $todaysTransactions->where('type', 'buy')->values();
         $sells = $todaysTransactions->where('type', 'sell')->values();
-        
+
         $reportData['buys'] = $buys;
         $reportData['sells'] = $sells;
         $reportData['ops_in'] = $opsEntries->where('type', 'in')->values();
@@ -282,21 +303,21 @@ class LaporanController extends Controller
         $reportData['transactions_all'] = $mergedHistory;
 
         if (!isset($reportData['saldo_akhir'])) {
-             $reportData['saldo_akhir'] = [
-                 'cash' => $saldoAkhirKas ?? 0,
-                 'bca' => $saldoAkhirBca ?? 0,
-                 'mandiri' => $saldoAkhirMandiri ?? 0,
-             ];
-             $reportData['grand_total_money'] = $totalSaldoAkhir ?? 0;
-             $reportData['total_asset_valas'] = $totalAssetValas ?? 0;
-             $reportData['grand_total'] = $grandTotalHariIni ?? 0;
-             $reportData['net_profit'] = $netProfit ?? 0;
+            $reportData['saldo_akhir'] = [
+                'cash' => $saldoAkhirKas ?? 0,
+                'bca' => $saldoAkhirBca ?? 0,
+                'mandiri' => $saldoAkhirMandiri ?? 0,
+            ];
+            $reportData['grand_total_money'] = $totalSaldoAkhir ?? 0;
+            $reportData['total_asset_valas'] = $totalAssetValas ?? 0;
+            $reportData['grand_total'] = $grandTotalHariIni ?? 0;
+            $reportData['net_profit'] = $netProfit ?? 0;
         } else {
-             $reportData['grand_total_money'] = $reportData['totals']['total_money'];
-             $reportData['total_asset_valas'] = $reportData['totals']['asset_valas'];
+            $reportData['grand_total_money'] = $reportData['totals']['total_money'];
+            $reportData['total_asset_valas'] = $reportData['totals']['asset_valas'];
         }
 
-        return Excel::download(new LaporanExport($reportData, $date), 'Laporan_Harian_'. $date .'.xlsx');
+        return Excel::download(new LaporanExport($reportData, $date), 'Laporan_Harian_' . $date . '.xlsx');
     }
 
     public function endShift(Request $request)
@@ -304,7 +325,7 @@ class LaporanController extends Controller
         $date = now()->toDateString();
 
         if (DailyClosing::where('report_date', $date)->exists()) {
-             return back()->withErrors(['message' => 'Shift hari ini sudah ditutup!']);
+            return back()->withErrors(['message' => 'Shift hari ini sudah ditutup!']);
         }
 
         $financialAccounts = FinancialAccount::where('is_active', true)->get();
@@ -347,12 +368,15 @@ class LaporanController extends Controller
         }
 
         $opsSummary = [
-            'cash_in' => 0, 'cash_out' => 0,
-            'bca_in' => 0, 'bca_out' => 0,
-            'mandiri_in' => 0, 'mandiri_out' => 0,
-            'transfer_from_bank_to_cash' => 0, 
+            'cash_in' => 0,
+            'cash_out' => 0,
+            'bca_in' => 0,
+            'bca_out' => 0,
+            'mandiri_in' => 0,
+            'mandiri_out' => 0,
+            'transfer_from_bank_to_cash' => 0,
             'transfer_to_bank' => 0,
-            'ghost_adjustment' => 0, 
+            'ghost_adjustment' => 0,
         ];
 
         foreach ($opsEntries as $op) {
@@ -362,19 +386,17 @@ class LaporanController extends Controller
             if ($ftype === 'cash') {
                 if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                 else $opsSummary['cash_out'] += $amt;
-            } 
-            elseif (in_array($ftype, ['bca', 'mandiri'])) {
+            } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-                    $opsSummary['transfer_to_bank'] += $amt; 
+                    $opsSummary['transfer_to_bank'] += $amt;
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt;
                 }
-            }
-            elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
+            } elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                 if (Str::contains($ftype, 'bca')) {
                     if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['bca_out'] += $amt;
@@ -392,37 +414,38 @@ class LaporanController extends Controller
         }
 
         $saldoAkhirKas = $saldoAwalCash + $mutations['salesCash'] - $mutations['buyCash'] + $opsSummary['cash_in'] - $opsSummary['cash_out'];
-        
+
         $opsSummary = [
-            'cash_in' => 0, 'cash_out' => 0,
-            'bca_in' => 0, 'bca_out' => 0,
-            'mandiri_in' => 0, 'mandiri_out' => 0,
-            'transfer_from_bank_to_cash' => 0, 
+            'cash_in' => 0,
+            'cash_out' => 0,
+            'bca_in' => 0,
+            'bca_out' => 0,
+            'mandiri_in' => 0,
+            'mandiri_out' => 0,
+            'transfer_from_bank_to_cash' => 0,
             'transfer_to_bank' => 0,
-            'ghost_adjustment' => 0, 
+            'ghost_adjustment' => 0,
         ];
 
         foreach ($opsEntries as $op) {
             $amt = (float) $op->amount;
-            $ftype = $op->financialAccount->type; 
+            $ftype = $op->financialAccount->type;
 
             if ($ftype === 'cash') {
                 if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                 else $opsSummary['cash_out'] += $amt;
-            } 
-            elseif (in_array($ftype, ['bca', 'mandiri'])) {
+            } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                 if ($op->type === 'in') {
                     if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['mandiri_in'] += $amt;
-                    $opsSummary['transfer_to_bank'] += $amt; 
+                    $opsSummary['transfer_to_bank'] += $amt;
                 } else {
                     if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                     else $opsSummary['mandiri_out'] += $amt;
-                    $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                    $opsSummary['transfer_from_bank_to_cash'] += $amt;
                 }
-            }
-            elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
-                 if (Str::contains($ftype, 'bca')) {
+            } elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
+                if (Str::contains($ftype, 'bca')) {
                     if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                     else $opsSummary['bca_out'] += $amt;
                 } elseif (Str::contains($ftype, 'mandiri')) {
@@ -432,49 +455,49 @@ class LaporanController extends Controller
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                     else $opsSummary['cash_out'] += $amt;
                 }
-                
+
                 if ($op->type === 'in') $opsSummary['ghost_adjustment'] -= $amt;
                 else $opsSummary['ghost_adjustment'] += $amt;
             }
         }
 
-        $saldoAkhirKas = $saldoAwalCash 
-            + $mutations['salesCash'] 
-            - $mutations['buyCash'] 
-            + $opsSummary['cash_in'] 
-            - $opsSummary['cash_out'] 
-            + $opsSummary['transfer_from_bank_to_cash'] 
+        $saldoAkhirKas = $saldoAwalCash
+            + $mutations['salesCash']
+            - $mutations['buyCash']
+            + $opsSummary['cash_in']
+            - $opsSummary['cash_out']
+            + $opsSummary['transfer_from_bank_to_cash']
             - $opsSummary['transfer_to_bank'];
 
-        $saldoAkhirBca = $saldoAwalBca 
-            + $mutations['salesBca'] 
-            - $mutations['buyBca'] 
-            + $opsSummary['bca_in'] 
+        $saldoAkhirBca = $saldoAwalBca
+            + $mutations['salesBca']
+            - $mutations['buyBca']
+            + $opsSummary['bca_in']
             - $opsSummary['bca_out'];
 
         $saldoAkhirMandiri = $saldoAwalMandiri
-            + $mutations['salesMandiri'] 
-            - $mutations['buyMandiri'] 
-            + $opsSummary['mandiri_in'] 
+            + $mutations['salesMandiri']
+            - $mutations['buyMandiri']
+            + $opsSummary['mandiri_in']
             - $opsSummary['mandiri_out'];
 
         $yesterdayClosingCheck = DailyClosing::where('report_date', '<', $date)
-             ->orderBy('report_date', 'desc')
-             ->first();
-        
+            ->orderBy('report_date', 'desc')
+            ->first();
+
         $manualAdjustmentFromYesterday = 0;
         if ($yesterdayClosingCheck) {
-             $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance + 
-                                         $yesterdayClosingCheck->bca_ending_balance + 
-                                         $yesterdayClosingCheck->mandiri_ending_balance;
-             
-             if ($yesterdayClosingCheck->total_money_balance != 0) {
-                 $manualAdjustmentFromYesterday = $yesterdayClosingCheck->total_money_balance - $calculatedYesterdayTotal;
-             }
+            $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance +
+                $yesterdayClosingCheck->bca_ending_balance +
+                $yesterdayClosingCheck->mandiri_ending_balance;
+
+            if ($yesterdayClosingCheck->total_money_balance != 0) {
+                $manualAdjustmentFromYesterday = $yesterdayClosingCheck->total_money_balance - $calculatedYesterdayTotal;
+            }
         }
 
         $totalSaldoAkhir = $saldoAkhirKas + $saldoAkhirBca + $saldoAkhirMandiri + $opsSummary['ghost_adjustment'] + $manualAdjustmentFromYesterday;
-        
+
         $totalAssetValas = \App\Models\Currencies::all()->sum(function ($currency) {
             return $currency->stock_amount * $currency->average_rate;
         });
@@ -485,21 +508,33 @@ class LaporanController extends Controller
             ->orderBy('report_date', 'desc')
             ->first();
         $grandTotalKemarin = $yesterdayClosing ? $yesterdayClosing->grand_total : 0;
-        
+
         $netProfit = $grandTotal - $grandTotalKemarin;
 
-        DB::transaction(function () use ($date, $saldoAwalCash, $mutations, $saldoAkhirKas,
-                                         $saldoAwalBca, $saldoAkhirBca, $saldoAwalMandiri, 
-                                         $saldoAkhirMandiri, $grandTotal, $netProfit, 
-                                         $totalAssetValas, $opsSummary, $manualAdjustmentFromYesterday, $totalSaldoAkhir) {
-    
+        DB::transaction(function () use (
+            $date,
+            $saldoAwalCash,
+            $mutations,
+            $saldoAkhirKas,
+            $saldoAwalBca,
+            $saldoAkhirBca,
+            $saldoAwalMandiri,
+            $saldoAkhirMandiri,
+            $grandTotal,
+            $netProfit,
+            $totalAssetValas,
+            $opsSummary,
+            $manualAdjustmentFromYesterday,
+            $totalSaldoAkhir
+        ) {
+
             DailyClosing::create([
                 'report_date' => $date,
                 'cash_opening_balance' => $saldoAwalCash,
                 'cash_sales' => $mutations['salesCash'],
                 'cash_buy' => $mutations['buyCash'],
                 'cash_ending_balance' => $saldoAkhirKas,
-                
+
                 'bca_opening_balance' => $saldoAwalBca,
                 'bca_mutation_in' => $mutations['salesBca'] + $opsSummary['bca_in'],
                 'bca_mutation_out' => $mutations['buyBca'] + $opsSummary['bca_out'],
@@ -512,57 +547,57 @@ class LaporanController extends Controller
 
                 'total_buy_transaction' => $mutations['buyCash'] + $mutations['buyBca'] + $mutations['buyMandiri'],
                 'total_sales_transaction' => $mutations['salesCash'] + $mutations['salesBca'] + $mutations['salesMandiri'],
-                
-                'total_money_balance' => $totalSaldoAkhir, 
-                
+
+                'total_money_balance' => $totalSaldoAkhir,
+
                 'total_valas_balance' => $totalAssetValas,
                 'grand_total' => $grandTotal,
                 'net_profit' => $netProfit,
             ]);
 
-             $accounts = FinancialAccount::all()->keyBy('id');
-             $accountBalances = $accounts->map->balance; 
+            $accounts = FinancialAccount::all()->keyBy('id');
+            $accountBalances = $accounts->map->balance;
 
-             $txs = Transactions::whereDate('created_at', $date)->get();
-             foreach ($txs as $tx) {
-                 if ($tx->type == 'sell') { 
-                     $accountBalances[$tx->financial_account_id] += $tx->total_idr;
-                 } else { 
-                     $accountBalances[$tx->financial_account_id] -= $tx->total_idr;
-                 }
-             }
-             
-             $cashAccountId = $accounts->first(fn($a) => $a->type === 'cash')?->id;
+            $txs = Transactions::whereDate('created_at', $date)->get();
+            foreach ($txs as $tx) {
+                if ($tx->type == 'sell') {
+                    $accountBalances[$tx->financial_account_id] += $tx->total_idr;
+                } else {
+                    $accountBalances[$tx->financial_account_id] -= $tx->total_idr;
+                }
+            }
 
-             $ops = \App\Models\OperationalEntry::whereDate('created_at', $date)->get();
-             foreach ($ops as $op) {
-                 $accId = $op->financial_account_id;
-                 $amount = $op->amount;
+            $cashAccountId = $accounts->first(fn($a) => $a->type === 'cash')?->id;
 
-                 $ftype = isset($accounts[$accId]) ? strtolower($accounts[$accId]->type) : '';
+            $ops = \App\Models\OperationalEntry::whereDate('created_at', $date)->get();
+            foreach ($ops as $op) {
+                $accId = $op->financial_account_id;
+                $amount = $op->amount;
 
-                 if ($op->type == 'in') {
-                     $accountBalances[$accId] += $amount;
-                     
-                     if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
-                         $accountBalances[$cashAccountId] -= $amount;
-                     }
-                 } else {
-                     $accountBalances[$accId] -= $amount;
+                $ftype = isset($accounts[$accId]) ? strtolower($accounts[$accId]->type) : '';
 
-                     if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
-                         $accountBalances[$cashAccountId] += $amount;
-                     }
-                 }
-             }
+                if ($op->type == 'in') {
+                    $accountBalances[$accId] += $amount;
 
-             foreach ($accountBalances as $id => $bal) {
-                 FinancialAccount::where('id', $id)->update(['balance' => $bal]);
-             }
+                    if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
+                        $accountBalances[$cashAccountId] -= $amount;
+                    }
+                } else {
+                    $accountBalances[$accId] -= $amount;
+
+                    if (in_array($ftype, ['bca', 'mandiri']) && $cashAccountId) {
+                        $accountBalances[$cashAccountId] += $amount;
+                    }
+                }
+            }
+
+            foreach ($accountBalances as $id => $bal) {
+                FinancialAccount::where('id', $id)->update(['balance' => $bal]);
+            }
         });
 
         Auth::logout();
-        
+
         return redirect()->route('login')->with('status', 'Shift ended. See you tomorrow!');
     }
 
@@ -610,19 +645,19 @@ class LaporanController extends Controller
     {
         $dateParam = $request->input('date');
         $today = now()->toDateString();
-        
+
         if (!$dateParam && DailyClosing::where('report_date', $today)->exists()) {
-             $date = now()->addDay()->toDateString();
+            $date = now()->addDay()->toDateString();
         } else {
-             $date = $dateParam ?? $today;
+            $date = $dateParam ?? $today;
         }
-        
+
         $dailyClosing = DailyClosing::where('report_date', $date)->first();
 
         $todaysTransactions = Transactions::with(['user', 'currency', 'financialAccount'])
             ->whereDate('created_at', $date)
             ->get();
-     
+
         $opsEntries = \App\Models\OperationalEntry::with('financialAccount')
             ->whereDate('created_at', $date)
             ->get();
@@ -693,9 +728,9 @@ class LaporanController extends Controller
                     'mandiri' => $dailyClosing->mandiri_opening_balance,
                 ],
                 'mutations' => [
-                    'salesCash' => $dailyClosing->cash_sales, 
+                    'salesCash' => $dailyClosing->cash_sales,
                     'buyCash' => $dailyClosing->cash_buy,
-                    'salesBca' => $dailyClosing->bca_mutation_in, 
+                    'salesBca' => $dailyClosing->bca_mutation_in,
                     'buyBca' => $dailyClosing->bca_mutation_out,
                     'salesMandiri' => $dailyClosing->mandiri_mutation_in,
                     'buyMandiri' => $dailyClosing->mandiri_mutation_out,
@@ -707,7 +742,7 @@ class LaporanController extends Controller
                     'asset_valas' => $dailyClosing->total_valas_balance,
                 ],
                 'ops' => [
-                     'cash_in' => 0, 
+                    'cash_in' => 0,
                 ],
                 'transactions' => $paginatedTransactions,
                 'saldo_akhir' => [
@@ -718,34 +753,36 @@ class LaporanController extends Controller
             ];
 
             $opsSummary = [
-                'cash_in' => 0, 'cash_out' => 0,
-                'bca_in' => 0, 'bca_out' => 0,
-                'mandiri_in' => 0, 'mandiri_out' => 0,
-                'transfer_from_bank_to_cash' => 0, 
+                'cash_in' => 0,
+                'cash_out' => 0,
+                'bca_in' => 0,
+                'bca_out' => 0,
+                'mandiri_in' => 0,
+                'mandiri_out' => 0,
+                'transfer_from_bank_to_cash' => 0,
                 'transfer_to_bank' => 0,
-                'ghost_adjustment' => 0, 
+                'ghost_adjustment' => 0,
             ];
             foreach ($opsEntries as $op) {
                 $amt = (float) $op->amount;
-                $ftype = $op->financialAccount->type; 
+                $ftype = $op->financialAccount->type;
                 if ($ftype === 'cash') {
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                     else $opsSummary['cash_out'] += $amt;
-                } 
-                elseif (in_array($ftype, ['bca', 'mandiri'])) {
+                } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; 
+                        $opsSummary['transfer_to_bank'] += $amt;
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt;
                     }
                 }
             }
             $reportData['ops'] = $opsSummary;
-            
+
             $reportData['mutations']['salesBca'] = $dailyClosing->bca_mutation_in - $opsSummary['bca_in'];
             $reportData['mutations']['buyBca'] = $dailyClosing->bca_mutation_out - $opsSummary['bca_out'];
             $reportData['mutations']['salesMandiri'] = $dailyClosing->mandiri_mutation_in - $opsSummary['mandiri_in'];
@@ -761,7 +798,6 @@ class LaporanController extends Controller
                 'yesterdayGrandTotal' => $yesterdayGrandTotal,
                 'isClosed' => true,
             ]);
-
         } else {
             $prevDate = \Carbon\Carbon::parse($date)->subDay()->toDateString();
             $prevClosing = DailyClosing::where('report_date', $prevDate)->first();
@@ -778,16 +814,19 @@ class LaporanController extends Controller
             }
 
             $mutations = [
-                'salesCash' => 0, 'buyCash' => 0,
-                'salesBca' => 0, 'buyBca' => 0,
-                'salesMandiri' => 0, 'buyMandiri' => 0,
+                'salesCash' => 0,
+                'buyCash' => 0,
+                'salesBca' => 0,
+                'buyBca' => 0,
+                'salesMandiri' => 0,
+                'buyMandiri' => 0,
             ];
 
             foreach ($todaysTransactions as $trx) {
                 $nominal = (float) $trx->total_idr;
                 $type = $trx->type;
                 $accountType = $trx->financialAccount ? strtolower($trx->financialAccount->type) : '';
-                
+
                 if ($accountType === 'cash') {
                     if ($type === 'sell') $mutations['salesCash'] += $nominal;
                     if ($type === 'buy') $mutations['buyCash'] += $nominal;
@@ -801,12 +840,15 @@ class LaporanController extends Controller
             }
 
             $opsSummary = [
-                'cash_in' => 0, 'cash_out' => 0,
-                'bca_in' => 0, 'bca_out' => 0,
-                'mandiri_in' => 0, 'mandiri_out' => 0,
-                'transfer_from_bank_to_cash' => 0, 
+                'cash_in' => 0,
+                'cash_out' => 0,
+                'bca_in' => 0,
+                'bca_out' => 0,
+                'mandiri_in' => 0,
+                'mandiri_out' => 0,
+                'transfer_from_bank_to_cash' => 0,
                 'transfer_to_bank' => 0,
-                'ghost_adjustment' => 0, 
+                'ghost_adjustment' => 0,
             ];
 
             foreach ($opsEntries as $op) {
@@ -816,19 +858,17 @@ class LaporanController extends Controller
                 if ($ftype === 'cash') {
                     if ($op->type === 'in') $opsSummary['cash_in'] += $amt;
                     else $opsSummary['cash_out'] += $amt;
-                } 
-                elseif (in_array($ftype, ['bca', 'mandiri'])) {
+                } elseif (in_array($ftype, ['bca', 'mandiri'])) {
                     if ($op->type === 'in') {
                         if ($ftype === 'bca') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['mandiri_in'] += $amt;
-                        $opsSummary['transfer_to_bank'] += $amt; 
+                        $opsSummary['transfer_to_bank'] += $amt;
                     } else {
                         if ($ftype === 'bca') $opsSummary['bca_out'] += $amt;
                         else $opsSummary['mandiri_out'] += $amt;
-                        $opsSummary['transfer_from_bank_to_cash'] += $amt; 
+                        $opsSummary['transfer_from_bank_to_cash'] += $amt;
                     }
-                }
-                elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
+                } elseif (in_array($ftype, ['bca2', 'mandiri2', 'cash2'])) {
                     if (Str::contains($ftype, 'bca')) {
                         if ($op->type === 'in') $opsSummary['bca_in'] += $amt;
                         else $opsSummary['bca_out'] += $amt;
@@ -861,13 +901,13 @@ class LaporanController extends Controller
             $yesterdayClosingCheck = DailyClosing::where('report_date', '<', $date)
                 ->orderBy('report_date', 'desc')
                 ->first();
-            
+
             $manualAdjustmentFromYesterday = 0;
             if ($yesterdayClosingCheck) {
-                $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance + 
-                                            $yesterdayClosingCheck->bca_ending_balance + 
-                                            $yesterdayClosingCheck->mandiri_ending_balance;
-                
+                $calculatedYesterdayTotal = $yesterdayClosingCheck->cash_ending_balance +
+                    $yesterdayClosingCheck->bca_ending_balance +
+                    $yesterdayClosingCheck->mandiri_ending_balance;
+
                 if ($yesterdayClosingCheck->total_money_balance != 0) {
                     $manualAdjustmentFromYesterday = $yesterdayClosingCheck->total_money_balance - $calculatedYesterdayTotal;
                 }
@@ -879,17 +919,17 @@ class LaporanController extends Controller
             $yesterdayClosing = DailyClosing::where('report_date', '<', $date)
                 ->orderBy('report_date', 'desc')
                 ->first();
-            $yesterdayGrandTotal = $grandTotalHariIni - ($dailyClosing->net_profit ?? 0); 
+            $yesterdayGrandTotal = $grandTotalHariIni - ($dailyClosing->net_profit ?? 0);
 
             if (!$dailyClosing) {
-                 $yesterdayGrandTotalForProfit = $yesterdayClosing ? $yesterdayClosing->grand_total : 0;
-                 $netProfit = $grandTotalHariIni - $yesterdayGrandTotalForProfit;
-                 $reportData['net_profit'] = $netProfit;
+                $yesterdayGrandTotalForProfit = $yesterdayClosing ? $yesterdayClosing->grand_total : 0;
+                $netProfit = $grandTotalHariIni - $yesterdayGrandTotalForProfit;
+                $reportData['net_profit'] = $netProfit;
             }
 
             $reportData['totals']['total_money'] = $totalSaldoAkhir;
             $reportData['totals']['adjustment'] = $opsSummary['ghost_adjustment'] + $manualAdjustmentFromYesterday;
-            
+
             $reportData['grand_total'] = $grandTotalHariIni;
 
             $yesterdayClosing = DailyClosing::where('report_date', '<', $date)
@@ -915,7 +955,7 @@ class LaporanController extends Controller
                         'total_money' => $totalSaldoAkhir,
                         'asset_valas' => $totalAssetValas,
                     ],
-                    'transactions' => $paginatedTransactions, 
+                    'transactions' => $paginatedTransactions,
                     'ops' => $opsSummary,
                     'saldo_akhir' => [
                         'cash' => $saldoAkhirKas,
@@ -929,30 +969,30 @@ class LaporanController extends Controller
     public function destroy($id)
     {
         $today = now()->toDateString();
-        
+
         if (Str::startsWith($id, 'ops-')) {
             $realId = Str::replace('ops-', '', $id);
             $op = \App\Models\OperationalEntry::findOrFail($realId);
-            
+
             if ($op->created_at->format('Y-m-d') !== $today) {
                 return back()->withErrors(['message' => 'Hanya data hari ini yang bisa dihapus!']);
             }
-            
+
             if (DailyClosing::where('report_date', $today)->exists()) {
-                 return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
+                return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
             }
 
             $op->delete();
             return back()->with('success', 'Data operasional berhasil dihapus.');
         } else {
             $trx = Transactions::findOrFail($id);
-            
+
             if ($trx->created_at->format('Y-m-d') !== $today) {
                 return back()->withErrors(['message' => 'Hanya transaksi hari ini yang bisa dihapus!']);
             }
-            
+
             if (DailyClosing::where('report_date', $today)->exists()) {
-                 return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
+                return back()->withErrors(['message' => 'Shift hari ini sudah ditutup, tidak bisa menghapus data!']);
             }
 
             $currency = \App\Models\Currencies::find($trx->currency_id);
@@ -962,14 +1002,13 @@ class LaporanController extends Controller
                     $buyVal = $trx->amount * $trx->rate;
                     $prevTotalVal = $currentTotalVal - $buyVal;
                     $prevStock = $currency->stock_amount - $trx->amount;
-                    
+
                     if ($prevStock > 0) {
                         $currency->average_rate = abs($prevTotalVal) < 0.01 ? 0 : $prevTotalVal / $prevStock;
                     } else {
                         $currency->average_rate = 0;
                     }
                     $currency->stock_amount = $prevStock;
-                    
                 } elseif ($trx->type === 'sell') {
                     $currency->stock_amount += $trx->amount;
                 }

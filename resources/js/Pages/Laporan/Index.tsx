@@ -57,7 +57,6 @@ import {
     Coins,
     Landmark,
     Lock,
-    Printer,
     Trash2,
     TrendingUp,
     Wallet,
@@ -209,6 +208,16 @@ export default function ReportIndex({
     };
 
     const handleEndShift = () => {
+        if (isFuture) {
+            toast.warning('Tidak bisa export laporan untuk tanggal mendatang');
+            return;
+        }
+
+        if (!isToday) {
+            toast.error('Shift hanya bisa ditutup pada hari berjalan');
+            return;
+        }
+
         const exportUrl = route('laporan.export', { date });
 
         const link = document.createElement('a');
@@ -234,7 +243,7 @@ export default function ReportIndex({
                     },
                 },
             );
-        }, 500); 
+        }, 500);
     };
 
     const [deleteId, setDeleteId] = useState<string | number | null>(null);
@@ -268,6 +277,8 @@ export default function ReportIndex({
     const selectedDate = React.useMemo(() => {
         return date ? new Date(date) : undefined;
     }, [date]);
+
+    const isFuture = date > todayString;
 
     return (
         <AuthenticatedLayout
@@ -413,6 +424,16 @@ export default function ReportIndex({
                                                 </span>
                                             </div>
                                         </div>
+                                        {isFuture && (
+                                            <div className="rounded-lg border border-red-200 bg-red-50 mt-3 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
+                                                ⚠️ Tidak bisa export laporan
+                                                untuk tanggal mendatang.
+                                                <br />
+                                                Silakan kembali di hari berjalan
+                                                untuk menutup shift.
+                                            </div>
+                                        )}
+
                                         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                                             Data hari ini akan dikunci dan saldo
                                             akhir akan menjadi saldo awal untuk
@@ -985,12 +1006,13 @@ export default function ReportIndex({
                                                 </TableCell>
 
                                                 <TableCell
-                                                    className={`text-right font-bold ${['buy', 'out'].includes(
-                                                        item.transaction_type,
-                                                    )
-                                                        ? 'text-red-600 dark:text-red-500'
-                                                        : 'text-green-600 dark:text-green-500'
-                                                        }`}
+                                                    className={`text-right font-bold ${
+                                                        ['buy', 'out'].includes(
+                                                            item.transaction_type,
+                                                        )
+                                                            ? 'text-red-600 dark:text-red-500'
+                                                            : 'text-green-600 dark:text-green-500'
+                                                    }`}
                                                 >
                                                     {['buy', 'out'].includes(
                                                         item.transaction_type,
