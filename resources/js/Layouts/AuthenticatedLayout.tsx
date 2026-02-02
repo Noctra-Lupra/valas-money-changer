@@ -120,13 +120,6 @@ export default function AuthenticatedLayout({
                                             <Users className="h-4 w-4" />
                                             Kas dan Biaya
                                         </NavLink> */}
-                                        <Link
-                                            href="#"
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Users className="h-4 w-4" />
-                                            Users
-                                        </Link>
                                     </div>
                                 </div>
                             </nav>
