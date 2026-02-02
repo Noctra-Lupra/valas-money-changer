@@ -28,6 +28,7 @@ Route::get('/receipt-templates/active', [ReceiptTemplateController::class, 'acti
 
 Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
 Route::post('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'store'])->middleware(['auth', 'verified'])->name('stok-valas.store');
+Route::delete('/stok-valas/{id}', [\App\Http\Controllers\StokValasController::class, 'destroy'])->middleware(['auth', 'verified'])->name('stok-valas.destroy');
 
 Route::get('/operational', function () {
     return Inertia::render('Operational/Index');
