@@ -778,7 +778,7 @@ export default function ReportIndex({
                                             onValueChange={(val) =>
                                                 setData('payment_method', val)
                                             }
-                                            defaultValue="cash"
+                                            value={data.payment_method}
                                         >
                                             <SelectTrigger className="h-10 border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-800">
                                                 <SelectValue />
@@ -786,6 +786,9 @@ export default function ReportIndex({
                                             <SelectContent>
                                                 <SelectItem value="cash">
                                                     💵 Cash / Tunai
+                                                </SelectItem>
+                                                <SelectItem value="cash2">
+                                                    💵 Cash / Tunai 2
                                                 </SelectItem>
                                                 <SelectItem value="bca">
                                                     🏦 Bank BCA
@@ -982,13 +985,12 @@ export default function ReportIndex({
                                                 </TableCell>
 
                                                 <TableCell
-                                                    className={`text-right font-bold ${
-                                                        ['buy', 'out'].includes(
-                                                            item.transaction_type,
-                                                        )
-                                                            ? 'text-red-600 dark:text-red-500'
-                                                            : 'text-green-600 dark:text-green-500'
-                                                    }`}
+                                                    className={`text-right font-bold ${['buy', 'out'].includes(
+                                                        item.transaction_type,
+                                                    )
+                                                        ? 'text-red-600 dark:text-red-500'
+                                                        : 'text-green-600 dark:text-green-500'
+                                                        }`}
                                                 >
                                                     {['buy', 'out'].includes(
                                                         item.transaction_type,

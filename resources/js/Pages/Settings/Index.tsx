@@ -331,16 +331,10 @@ export default function SettingIndex({
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
-                                        {financialData.accounts.map(
-                                            (acc, index) => {
-                                                if (acc.type === 'cash')
-                                                    return null;
-                                                // Hide bca2 and mandiri2 if requested
-                                                if (
-                                                    acc.type === 'bca2' ||
-                                                    acc.type === 'mandiri2'
-                                                )
-                                                    return null;
+                                        {financialData.accounts.map((acc, index) => {
+                                            if (acc.type === 'cash') return null;
+                                            // Hide bca2 and mandiri2 if requested
+                                            if (acc.type === 'bca2' || acc.type === 'mandiri2') return null;
 
                                                 return (
                                                     <div

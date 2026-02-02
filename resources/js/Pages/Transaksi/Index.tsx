@@ -634,7 +634,7 @@ export default function Transaksi({ currencies }: Props) {
                                         onValueChange={(val) =>
                                             setData('payment_method', val)
                                         }
-                                        defaultValue={data.payment_method}
+                                        value={data.payment_method}
                                     >
                                         <SelectTrigger className="h-11">
                                             <SelectValue placeholder="Metode" />
