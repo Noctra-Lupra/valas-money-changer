@@ -30,7 +30,7 @@ type Transaction = {
 };
 
 
-export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [], yesterdayGrandTotal = 0, todayClosing = null, openingBalances }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[], yesterdayGrandTotal?: number, todayClosing?: any, openingBalances?: any }>) {
+export default function Dashboard({ auth, financialAccounts = [], recentTransactions = [], yesterdayGrandTotal = 0, todayClosing = null, openingBalances, transactionCounts = { buy: 0, sell: 0, total: 0 } }: PageProps<{ financialAccounts: FinancialAccount[], recentTransactions: Transaction[], yesterdayGrandTotal?: number, todayClosing?: any, openingBalances?: any, transactionCounts?: { buy: number, sell: number, total: number } }>) {
     const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
 
     const filteredTransactions = recentTransactions.filter((trx) => {
@@ -149,10 +149,18 @@ export default function Dashboard({ auth, financialAccounts = [], recentTransact
                         </CardHeader>
                         <CardContent>
                             <div className="text-4xl font-extrabold text-gray-900 dark:text-white">
-                                Rp 46.900.000
+                                {transactionCounts.total}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                <span className="text-green-600 font-medium">↑ 12%</span> dari kemarin
+                            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                                <span className="text-green-600 font-medium flex items-center gap-1">
+                                    <ArrowDownLeft className="w-3 h-3" />
+                                    {transactionCounts.buy} Buy
+                                </span>
+                                <span className="text-gray-300 dark:text-gray-600">|</span>
+                                <span className="text-orange-600 font-medium flex items-center gap-1">
+                                    <ArrowUpRight className="w-3 h-3" />
+                                    {transactionCounts.sell} Sell
+                                </span>
                             </p>
                         </CardContent>
                     </Card>
