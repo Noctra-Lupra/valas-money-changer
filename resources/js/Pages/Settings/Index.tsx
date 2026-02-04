@@ -334,8 +334,7 @@ export default function SettingIndex({
                                         {financialData.accounts.map((acc, index) => {
                                             if (acc.type === 'cash') return null;
                                             // Hide bca2 and mandiri2 if requested
-                                            if (acc.type === 'bca2' || acc.type === 'mandiri2') return null;
-
+                                            if (acc.type === 'bca2' || acc.type === 'mandiri2' || acc.type === 'cash2') return null;
                                                 return (
                                                     <div
                                                         key={acc.type}
