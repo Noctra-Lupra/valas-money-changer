@@ -7,6 +7,8 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Button } from '@/Components/ui/button';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Login({
     status,
@@ -20,6 +22,8 @@ export default function Login({
         password: '',
         remember: false as boolean,
     });
+
+    const [showPassword, setShowPassword] = useState(false);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -60,15 +64,29 @@ export default function Login({
                 <div className="mt-4">
                     <InputLabel htmlFor="password" value="Password" />
 
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
+                    <div className="relative mt-1">
+                        <TextInput
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            value={data.password}
+                            className="block w-full pr-10"
+                            autoComplete="current-password"
+                            onChange={(e) => setData('password', e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-5 w-5" />
+                            ) : (
+                                <Eye className="h-5 w-5" />
+                            )}
+                        </button>
+                    </div>
 
                     <InputError message={errors.password} className="mt-2" />
                 </div>
