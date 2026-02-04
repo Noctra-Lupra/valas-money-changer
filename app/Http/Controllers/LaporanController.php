@@ -31,17 +31,17 @@ class LaporanController extends Controller
             abort(403, 'Shift hari ini belum ditutup. Silakan end shift terlebih dahulu.');
         }
 
-        // ❌ BLOK export ulang hari ini setelah end shift
-        if ($date === $today && $dailyClosing) {
-            abort(403, 'Shift hari ini sudah ditutup dan tidak bisa export ulang.');
-        }
+// ✅ Allow export ulang hari ini setelah end shift
+        // if ($date === $today && $dailyClosing) {
+        //     abort(403, 'Shift hari ini sudah ditutup dan tidak bisa export ulang.');
+        // }
 
         // ❌ BLOK tanggal lama yang BELUM pernah ditutup
         if ($date < $today && !$dailyClosing) {
             abort(403, 'Laporan tanggal ini belum ditutup.');
         }
 
-        if ($date->isFuture()) {
+        if (\Carbon\Carbon::parse($date)->isFuture()) {
             abort(403, 'Tidak bisa export laporan untuk tanggal mendatang');
         }
 
@@ -596,7 +596,7 @@ class LaporanController extends Controller
             }
         });
 
-        Auth::logout();
+        // Auth::logout();
 
         return redirect()->route('login')->with('status', 'Shift ended. See you tomorrow!');
     }

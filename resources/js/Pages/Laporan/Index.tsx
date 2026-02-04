@@ -113,28 +113,28 @@ export default function ReportIndex({
     const saldoAkhirKas =
         reportData.saldo_akhir?.cash ??
         (saldo_awal.cash || 0) +
-            (mutations.salesCash || 0) -
-            (mutations.buyCash || 0) +
-            (ops?.cash_in || 0) -
-            (ops?.cash_out || 0) +
-            (ops?.transfer_from_bank_to_cash || 0) -
-            (ops?.transfer_to_bank || 0);
+        (mutations.salesCash || 0) -
+        (mutations.buyCash || 0) +
+        (ops?.cash_in || 0) -
+        (ops?.cash_out || 0) +
+        (ops?.transfer_from_bank_to_cash || 0) -
+        (ops?.transfer_to_bank || 0);
 
     const saldoAkhirBca =
         reportData.saldo_akhir?.bca ??
         (saldo_awal.bca || 0) +
-            (mutations.salesBca || 0) -
-            (mutations.buyBca || 0) +
-            (ops?.bca_in || 0) -
-            (ops?.bca_out || 0);
+        (mutations.salesBca || 0) -
+        (mutations.buyBca || 0) +
+        (ops?.bca_in || 0) -
+        (ops?.bca_out || 0);
 
     const saldoAkhirMandiri =
         reportData.saldo_akhir?.mandiri ??
         (saldo_awal.mandiri || 0) +
-            (mutations.salesMandiri || 0) -
-            (mutations.buyMandiri || 0) +
-            (ops?.mandiri_in || 0) -
-            (ops?.mandiri_out || 0);
+        (mutations.salesMandiri || 0) -
+        (mutations.buyMandiri || 0) +
+        (ops?.mandiri_in || 0) -
+        (ops?.mandiri_out || 0);
 
     const totalSaldoAkhir = totals.total_money;
 
@@ -218,32 +218,27 @@ export default function ReportIndex({
             return;
         }
 
-        const exportUrl = route('laporan.export', { date });
+        router.post(
+            route('laporan.end-shift'),
+            {},
+            {
+                preserveState: false,
+                onSuccess: () => {
+                    toast.success('Shift ditutup & laporan berhasil diexport');
 
-        const link = document.createElement('a');
-        link.href = exportUrl;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+                    
+                    const exportUrl = route('laporan.export', { date });
+                    window.open(exportUrl, '_blank');
 
-        setTimeout(() => {
-            router.post(
-                route('laporan.end-shift'),
-                {},
-                {
-                    preserveState: false,
-                    onSuccess: () => {
-                        toast.success(
-                            'Shift ditutup & laporan berhasil diexport',
-                        );
-                    },
-                    onError: (errors: any) => {
-                        toast.error(errors.message || 'Gagal menutup shift');
-                    },
+                    setTimeout(() => {
+                        router.post(route('logout'));
+                    }, 1500);
                 },
-            );
-        }, 500);
+                onError: (errors: any) => {
+                    toast.error(errors.message || 'Gagal menutup shift');
+                },
+            },
+        );
     };
 
     const [deleteId, setDeleteId] = useState<string | number | null>(null);
@@ -566,14 +561,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesBca || 0) +
-                                                (ops?.bca_in || 0),
+                                            (ops?.bca_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyBca || 0) +
-                                                (ops?.bca_out || 0),
+                                            (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -606,14 +601,14 @@ export default function ReportIndex({
                                         + Masuk:{' '}
                                         {formatDisplayNumber(
                                             (mutations.salesMandiri || 0) +
-                                                (ops?.mandiri_in || 0),
+                                            (ops?.mandiri_in || 0),
                                         )}
                                     </span>
                                     <span className="text-right text-red-600 dark:text-red-500">
                                         - Keluar:{' '}
                                         {formatDisplayNumber(
                                             (mutations.buyMandiri || 0) +
-                                                (ops?.mandiri_out || 0),
+                                            (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -679,9 +674,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesBca || 0) -
-                                                (mutations.buyBca || 0) +
-                                                (ops?.bca_in || 0) -
-                                                (ops?.bca_out || 0),
+                                            (mutations.buyBca || 0) +
+                                            (ops?.bca_in || 0) -
+                                            (ops?.bca_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -695,9 +690,9 @@ export default function ReportIndex({
                                     >
                                         {formatIDR(
                                             (mutations.salesMandiri || 0) -
-                                                (mutations.buyMandiri || 0) +
-                                                (ops?.mandiri_in || 0) -
-                                                (ops?.mandiri_out || 0),
+                                            (mutations.buyMandiri || 0) +
+                                            (ops?.mandiri_in || 0) -
+                                            (ops?.mandiri_out || 0),
                                         )}
                                     </span>
                                 </div>
@@ -965,8 +960,8 @@ export default function ReportIndex({
                                                                 ? 'border-gray-300 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-300'
                                                                 : item.transaction_type ===
                                                                     'buy'
-                                                                  ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
-                                                                  : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
+                                                                    ? 'border-transparent bg-blue-600 text-white hover:bg-blue-700'
+                                                                    : 'border-transparent bg-orange-600 text-white hover:bg-orange-700'
                                                         }
                                                     >
                                                         {item.transaction_type.toUpperCase()}
@@ -1006,13 +1001,12 @@ export default function ReportIndex({
                                                 </TableCell>
 
                                                 <TableCell
-                                                    className={`text-right font-bold ${
-                                                        ['buy', 'out'].includes(
-                                                            item.transaction_type,
-                                                        )
+                                                    className={`text-right font-bold ${['buy', 'out'].includes(
+                                                        item.transaction_type,
+                                                    )
                                                             ? 'text-red-600 dark:text-red-500'
                                                             : 'text-green-600 dark:text-green-500'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {['buy', 'out'].includes(
                                                         item.transaction_type,
