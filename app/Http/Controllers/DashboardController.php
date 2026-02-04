@@ -72,12 +72,20 @@ class DashboardController extends Controller
              }
         }
 
+        $todaysTrxRaw = Transactions::whereDate('created_at', $date)->get();
+        $transactionCounts = [
+            'buy' => $todaysTrxRaw->where('type', 'buy')->count(),
+            'sell' => $todaysTrxRaw->where('type', 'sell')->count(),
+            'total' => $todaysTrxRaw->count(),
+        ];
+
         return Inertia::render('Dashboard', [
             'financialAccounts' => $financialAccounts,
             'recentTransactions' => $transactions,
             'yesterdayGrandTotal' => $yesterdayGrandTotal,
             'todayClosing' => $todayClosing,
             'openingBalances' => $openingBalances,
+            'transactionCounts' => $transactionCounts,
         ]);
     }
 }
