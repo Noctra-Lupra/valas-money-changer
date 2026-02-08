@@ -1,69 +1,101 @@
 <?php
 
-use App\Http\Controllers\InvoiceTemplateController;
-use App\Http\Controllers\NotaLayoutController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReceiptTemplateController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\StokValasController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\InvoiceTemplateController;
+use App\Http\Controllers\NotaLayoutController;
+use App\Http\Controllers\ReceiptTemplateController;
 
 Route::get('/', function () {
     return Inertia::render('Auth/Login');
+})->middleware('role:admin,staff');
+
+Route::middleware(['auth', 'verified', 'role:admin,staff'])->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    // Laporan
+    Route::get('/laporan', [LaporanController::class, 'index'])
+        ->name('laporan.index');
+    Route::get('/laporan/export', [LaporanController::class, 'export'])
+        ->name('laporan.export');
+    Route::post('/laporan/end-shift', [LaporanController::class, 'endShift'])
+        ->name('laporan.end-shift');
+    Route::post('/laporan', [LaporanController::class, 'store'])
+        ->name('laporan.store');
+    Route::delete('/laporan/{id}', [LaporanController::class, 'destroy'])
+        ->name('laporan.destroy');
+
+    // Riwayat & Nota
+    Route::get('/riwayat', [RiwayatController::class, 'index'])
+        ->name('riwayat.index');
+    Route::get('/riwayat/{transaction}/print', [RiwayatController::class, 'print'])
+        ->name('riwayat.print');
+
+    // Invoice & Nota
+    Route::put('/settings/invoice-template', [InvoiceTemplateController::class, 'update'])
+        ->name('invoice-template.update');
+    Route::get('/invoice/{transaction}', [InvoiceTemplateController::class, 'show']);
+
+    Route::post('/nota-layout/save', [NotaLayoutController::class, 'save'])
+        ->name('nota-layout.save');
+
+    Route::post('/receipt-templates', [ReceiptTemplateController::class, 'store']);
+    Route::get('/receipt-templates/active', [ReceiptTemplateController::class, 'active']);
 });
 
-Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified', 'role:staff'])->group(function () {
 
-Route::get('/transaksi', [\App\Http\Controllers\TransactionController::class, 'index'])->middleware(['auth', 'verified'])->name('transaksi');
-Route::post('/transaksi', [\App\Http\Controllers\TransactionController::class, 'store'])->middleware(['auth', 'verified']);
-Route::post('/currencies/quick', [\App\Http\Controllers\TransactionController::class, 'quickStoreCurrency']);
+    // Transaksi
+    Route::get('/transaksi', [TransactionController::class, 'index'])
+        ->name('transaksi');
+    Route::post('/transaksi', [TransactionController::class, 'store']);
+    Route::post('/currencies/quick', [TransactionController::class, 'quickStoreCurrency']);
 
-Route::post('/nota-layout/save', [NotaLayoutController::class, 'save'])
-    ->middleware(['auth'])
-    ->name('nota-layout.save');
-
-Route::post('/receipt-templates', [ReceiptTemplateController::class, 'store']);
-Route::get('/receipt-templates/active', [ReceiptTemplateController::class, 'active']);
-
-Route::get('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'index'])->middleware(['auth', 'verified'])->name('stok-valas');
-Route::post('/stok-valas', [\App\Http\Controllers\StokValasController::class, 'store'])->middleware(['auth', 'verified'])->name('stok-valas.store');
-Route::delete('/stok-valas/{id}', [\App\Http\Controllers\StokValasController::class, 'destroy'])->middleware(['auth', 'verified'])->name('stok-valas.destroy');
-
-Route::get('/operational', function () {
-    return Inertia::render('Operational/Index');
-})->middleware(['auth', 'verified'])->name('operational');
-
-Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->middleware(['auth', 'verified'])->name('laporan.index');
-Route::get('/laporan/export', [\App\Http\Controllers\LaporanController::class, 'export'])->middleware(['auth', 'verified'])->name('laporan.export');
-Route::post('/laporan/end-shift', [\App\Http\Controllers\LaporanController::class, 'endShift'])->middleware(['auth', 'verified'])->name('laporan.end-shift');
-Route::post('/laporan', [\App\Http\Controllers\LaporanController::class, 'store'])->middleware(['auth', 'verified'])->name('laporan.store');
-Route::delete('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 'destroy'])->middleware(['auth', 'verified'])->name('laporan.destroy');
-
-Route::get('/riwayat', [\App\Http\Controllers\RiwayatController::class, 'index'])->middleware(['auth', 'verified'])->name('riwayat.index');
-Route::get('/riwayat/{transaction}/print', [\App\Http\Controllers\RiwayatController::class, 'print'])->middleware(['auth', 'verified'])->name('riwayat.print');
-
-Route::put('/settings/invoice-template', [InvoiceTemplateController::class, 'update'])
-    ->name('invoice-template.update');
-
-Route::get('/invoice/{transaction}', [InvoiceTemplateController::class, 'show']);
-
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/settings', [UserManagementController::class, 'index'])->name('settings');
-    Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}/password', [UserManagementController::class, 'updatePassword'])->name('users.update-password');
-    Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
-    Route::put('/financial-accounts', [UserManagementController::class, 'updateFinancial'])->name('financial.update');
-    Route::put('/currencies/stock', [UserManagementController::class, 'updateStock'])->name('currencies.update-stock');
+    // Stok Valas
+    Route::get('/stok-valas', [StokValasController::class, 'index'])
+        ->name('stok-valas');
+    Route::post('/stok-valas', [StokValasController::class, 'store'])
+        ->name('stok-valas.store');
+    Route::delete('/stok-valas/{id}', [StokValasController::class, 'destroy'])
+        ->name('stok-valas.destroy');
 });
 
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+
+    // Settings & User Management
+    Route::get('/settings', [UserManagementController::class, 'index'])
+        ->name('settings');
+    Route::post('/users', [UserManagementController::class, 'store'])
+        ->name('users.store');
+    Route::put('/users/{user}/password', [UserManagementController::class, 'updatePassword'])
+        ->name('users.update-password');
+    Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
+        ->name('users.destroy');
+
+    Route::put('/financial-accounts', [UserManagementController::class, 'updateFinancial'])
+        ->name('financial.update');
+    Route::put('/currencies/stock', [UserManagementController::class, 'updateStock'])
+        ->name('currencies.update-stock');
+});
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 });
 
 require __DIR__ . '/auth.php';
