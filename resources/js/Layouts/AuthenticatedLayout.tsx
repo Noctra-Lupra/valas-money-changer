@@ -1,20 +1,4 @@
-import {
-    LayoutGrid,
-    ListTodo,
-    Menu,
-    MessageSquare,
-    Package,
-    Users,
-    ArrowLeftRight,
-    Banknote,
-    BookAlert,
-    Settings,
-    GalleryVerticalEnd,
-    History,
-    LogOut
-} from 'lucide-react';
-import { PropsWithChildren, ReactNode } from 'react';
-import { Toaster } from "sonner";
+import NavLink from '@/Components/NavLink';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +11,23 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/Components/ui/sheet';
 import { Link, usePage } from '@inertiajs/react';
-import NavLink from '@/Components/NavLink';
+import {
+    ArrowLeftRight,
+    Banknote,
+    BookAlert,
+    GalleryVerticalEnd,
+    History,
+    LayoutGrid,
+    ListTodo,
+    LogOut,
+    Menu,
+    MessageSquare,
+    Package,
+    Settings,
+    Users,
+} from 'lucide-react';
+import { PropsWithChildren, ReactNode } from 'react';
+import { Toaster } from 'sonner';
 
 export default function AuthenticatedLayout({
     header,
@@ -39,14 +39,68 @@ export default function AuthenticatedLayout({
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        year: 'numeric'
+        year: 'numeric',
     });
+
+    const role = user.role;
+
+    const menus = {
+        admin: [
+            {
+                label: 'Dashboard',
+                route: 'dashboard',
+                icon: LayoutGrid,
+            },
+            {
+                label: 'Laporan',
+                route: 'laporan.index',
+                icon: BookAlert,
+            },
+            {
+                label: 'Setting',
+                route: 'settings',
+                icon: Settings,
+            },
+            {
+                label: 'Riwayat dan Nota',
+                route: 'riwayat.index',
+                icon: GalleryVerticalEnd,
+            },
+        ],
+        staff: [
+            {
+                label: 'Dashboard',
+                route: 'dashboard',
+                icon: LayoutGrid,
+            },
+            {
+                label: 'Transaksi',
+                route: 'transaksi',
+                icon: ArrowLeftRight,
+            },
+            {
+                label: 'Stok Valas',
+                route: 'stok-valas',
+                icon: Banknote,
+            },
+            {
+                label: 'Laporan',
+                route: 'laporan.index',
+                icon: BookAlert,
+            },
+            {
+                label: 'Riwayat dan Nota',
+                route: 'riwayat.index',
+                icon: GalleryVerticalEnd,
+            },
+        ],
+    };
 
     return (
         <>
             <Toaster position="bottom-right" />
             <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-                <div className="hidden border-r bg-muted/40 md:block sticky top-0 h-screen">
+                <div className="sticky top-0 hidden h-screen border-r bg-muted/40 md:block">
                     <div className="flex h-full max-h-screen flex-col gap-2">
                         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                             <Link
@@ -64,62 +118,23 @@ export default function AuthenticatedLayout({
                                         General
                                     </h3>
                                     <div className="space-y-1">
-                                        <NavLink
-                                            href={route('dashboard')}
-                                            active={route().current('dashboard')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <LayoutGrid className="h-4 w-4" />
-                                            Dashboard
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('transaksi')}
-                                            active={route().current('transaksi')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <ArrowLeftRight className="h-4 w-4" />
-                                            Transaksi
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('stok-valas')}
-                                            active={route().current('stok-valas')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Banknote className="h-4 w-4" />
-                                            Stok Valas
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('laporan.index')}
-                                            active={route().current('laporan.index')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <BookAlert className="h-4 w-4" />
-                                            Laporan
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('settings')}
-                                            active={route().current('settings')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Settings className="h-4 w-4" />
-                                            Setting
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('riwayat.index')}
-                                            active={route().current('riwayat.index')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <GalleryVerticalEnd className="h-4 w-4" />
-                                            Riwayat dan Nota
-                                        </NavLink>
-                                        {/* <NavLink
-                                            href={route('operational')}
-                                            active={route().current('operational')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Users className="h-4 w-4" />
-                                            Kas dan Biaya
-                                        </NavLink> */}
+                                        {menus[role]?.map((menu) => {
+                                            const Icon = menu.icon;
+
+                                            return (
+                                                <NavLink
+                                                    key={menu.route}
+                                                    href={route(menu.route)}
+                                                    active={route().current(
+                                                        menu.route,
+                                                    )}
+                                                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                                                >
+                                                    <Icon className="h-4 w-4" />
+                                                    {menu.label}
+                                                </NavLink>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </nav>
@@ -159,7 +174,10 @@ export default function AuthenticatedLayout({
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem>
-                                        <Link href={route('profile.edit')} className="w-full text-left">
+                                        <Link
+                                            href={route('profile.edit')}
+                                            className="w-full text-left"
+                                        >
                                             Profile
                                         </Link>
                                     </DropdownMenuItem>
@@ -171,7 +189,7 @@ export default function AuthenticatedLayout({
                                             as="button"
                                             className="w-full text-left text-red-600"
                                         >
-                                            <LogOut className="inline mr-2 h-4 w-4 text-red" />
+                                            <LogOut className="text-red mr-2 inline h-4 w-4" />
                                             Log Out
                                         </Link>
                                     </DropdownMenuItem>
@@ -197,7 +215,7 @@ export default function AuthenticatedLayout({
                             </SheetTrigger>
                             <SheetContent side="left" className="flex flex-col">
                                 <nav className="grid gap-2 text-lg font-medium">
-                                    <div className="flex items-center gap-2 text-lg font-semibold mb-4">
+                                    <div className="mb-4 flex items-center gap-2 text-lg font-semibold">
                                         <Package className="h-6 w-6" />
                                         <span>Nama Perusahaan</span>
                                     </div>
@@ -208,7 +226,9 @@ export default function AuthenticatedLayout({
                                         <div className="space-y-1">
                                             <NavLink
                                                 href={route('dashboard')}
-                                                active={route().current('dashboard')}
+                                                active={route().current(
+                                                    'dashboard',
+                                                )}
                                                 className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                                             >
                                                 <LayoutGrid className="h-5 w-5" />
@@ -250,13 +270,12 @@ export default function AuthenticatedLayout({
                                 </nav>
                             </SheetContent>
                         </Sheet>
-                        <div className="w-full flex">
-                            <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 px-4 py-2 ml-auto">
-                                <History className="w-4 h-4 mr-2" />
+                        <div className="flex w-full">
+                            <div className="ml-auto flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                                <History className="mr-2 h-4 w-4" />
                                 {today}
                             </div>
                         </div>
-
                     </header>
                     {header && (
                         <header className="shadow">
