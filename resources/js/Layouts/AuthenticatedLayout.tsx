@@ -53,8 +53,8 @@ export default function AuthenticatedLayout({
                                 href={route('dashboard')}
                                 className="flex items-center gap-2 font-semibold"
                             >
-                                {/* <Package className="h-6 w-6" /> */}
-                                <span className="">Berthaut Money Changer</span>
+                                <Package className="h-6 w-6" />
+                                <span className="">Nama Perusahaan</span>
                             </Link>
                         </div>
                         <div className="flex-1 overflow-auto py-2">
@@ -155,15 +155,15 @@ export default function AuthenticatedLayout({
                                     className="w-56"
                                 >
                                     <DropdownMenuLabel>
-                                        My account, login as {user.role}
+                                        My Account
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    {/* <DropdownMenuItem>
+                                    <DropdownMenuItem>
                                         <Link href={route('profile.edit')} className="w-full text-left">
                                             Profile
                                         </Link>
-                                    </DropdownMenuItem> */}
-                                    {/* <DropdownMenuSeparator /> */}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem variant="destructive">
                                         <Link
                                             href={route('logout')}
@@ -198,8 +198,8 @@ export default function AuthenticatedLayout({
                             <SheetContent side="left" className="flex flex-col">
                                 <nav className="grid gap-2 text-lg font-medium">
                                     <div className="flex items-center gap-2 text-lg font-semibold mb-4">
-                                        {/* <Package className="h-6 w-6" /> */}
-                                        <span>Berthaut Money Changer</span>
+                                        <Package className="h-6 w-6" />
+                                        <span>Nama Perusahaan</span>
                                     </div>
                                     <div className="px-2 py-2">
                                         <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
@@ -209,51 +209,42 @@ export default function AuthenticatedLayout({
                                             <NavLink
                                                 href={route('dashboard')}
                                                 active={route().current('dashboard')}
-                                                className="flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                                                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                                             >
                                                 <LayoutGrid className="h-5 w-5" />
                                                 Dashboard
                                             </NavLink>
-                                            <NavLink
-                                                href={route('transaksi')}
-                                                active={route().current('transaksi')}
-                                                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                                            <Link
+                                                href="#"
+                                                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
                                             >
-                                                <ArrowLeftRight className="h-4 w-4" />
-                                                Transaksi
-                                            </NavLink>
-                                            <NavLink
-                                            href={route('stok-valas')}
-                                            active={route().current('stok-valas')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Banknote className="h-4 w-4" />
-                                            Stok Valas
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('laporan.index')}
-                                            active={route().current('laporan.index')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <BookAlert className="h-4 w-4" />
-                                            Laporan
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('settings')}
-                                            active={route().current('settings')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <Settings className="h-4 w-4" />
-                                            Setting
-                                        </NavLink>
-                                        <NavLink
-                                            href={route('riwayat.index')}
-                                            active={route().current('riwayat.index')}
-                                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                                        >
-                                            <GalleryVerticalEnd className="h-4 w-4" />
-                                            Riwayat dan Nota
-                                        </NavLink>
+                                                <ListTodo className="h-5 w-5" />
+                                                Tasks
+                                            </Link>
+                                            <Link
+                                                href="#"
+                                                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                                            >
+                                                <Package className="h-5 w-5" />
+                                                Apps
+                                            </Link>
+                                            <Link
+                                                href="#"
+                                                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                                            >
+                                                <MessageSquare className="h-5 w-5" />
+                                                Chats
+                                                <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                                                    3
+                                                </Badge>
+                                            </Link>
+                                            <Link
+                                                href="#"
+                                                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                                            >
+                                                <Users className="h-5 w-5" />
+                                                Users
+                                            </Link>
                                         </div>
                                     </div>
                                 </nav>
