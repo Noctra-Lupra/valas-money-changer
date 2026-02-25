@@ -6,9 +6,9 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from '@/Components/ui/card';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
 import {
     Table,
     TableBody,
@@ -16,7 +16,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/Components/ui/table';
 import {
     Dialog,
     DialogContent,
@@ -24,7 +24,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/Components/ui/dialog"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -32,8 +32,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from '@/components/ui/button';
+} from "@/Components/ui/dropdown-menu"
+import { Button } from '@/Components/ui/button';
 import {
     Search,
     Package,

@@ -2,32 +2,32 @@
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 
-import InvoiceTemplate, { Transaction } from '@/components/InvoiceTemplate';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
+import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/Components/ui/button';
+import { Calendar } from '@/Components/ui/calendar';
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from '@/components/ui/card';
+} from '@/Components/ui/card';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+} from '@/Components/ui/dialog';
+import { Input } from '@/Components/ui/input';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select';
+} from '@/Components/ui/select';
 import {
     Table,
     TableBody,
@@ -35,7 +35,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/Components/ui/table';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { CalendarIcon, Eye, Printer, Search } from 'lucide-react';
@@ -46,7 +46,7 @@ import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from '@/components/ui/popover';
+} from '@/Components/ui/popover';
 import { cn } from '@/lib/utils';
 import { PaginatedData } from '@/types';
 

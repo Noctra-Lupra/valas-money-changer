@@ -1,6 +1,6 @@
-import NavLink from '@/components/NavLink';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import NavLink from '@/Components/NavLink';
+import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/Components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -8,8 +8,8 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+} from '@/Components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/Components/ui/sheet';
 import { Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,

@@ -1,6 +1,6 @@
 import { FormEventHandler } from 'react';
 import { useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -8,7 +8,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/Components/ui/dialog"
 import { toast } from 'sonner';
 import { User } from '@/types';
 import { AlertTriangle } from 'lucide-react';
