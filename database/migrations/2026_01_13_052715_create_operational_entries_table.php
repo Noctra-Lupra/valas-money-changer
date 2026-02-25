@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained();
             $table->foreignId('financial_account_id')->constrained();
             $table->enum('type', ['in', 'out']);
+            $table->string('category')->nullable();
             $table->decimal('amount', 15, 2);
             $table->text('description')->nullable();
             $table->timestamps();
