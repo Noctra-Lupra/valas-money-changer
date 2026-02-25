@@ -6,45 +6,45 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from '@/Components/ui/card';
+} from '@/components/ui/card';
 import {
     Command,
     CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
-} from '@/Components/ui/command';
+} from '@/components/ui/command';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-} from '@/Components/ui/dialog';
+} from '@/components/ui/dialog';
 import { router, usePage } from '@inertiajs/react';
 
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from '@/Components/ui/popover';
+} from '@/components/ui/popover';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/Components/ui/select';
+} from '@/components/ui/select';
 
-import NotaTemplate1 from '../../Components/nota/NotaTemplate1';
-import NotaTemplate2 from '../../Components/nota/NotaTemplate2';
-import NotaTemplate4 from '../../Components/nota/NotaTemplate4';
+import NotaTemplate1 from '../../components/nota/NotaTemplate1';
+import NotaTemplate2 from '../../components/nota/NotaTemplate2';
+import NotaTemplate4 from '../../components/nota/NotaTemplate4';
 
-import InvoiceTemplate from '@/Components/InvoiceTemplate';
-import NotaTemplate3 from '@/Components/nota/NotaTemplate3';
-import { Separator } from '@/Components/ui/separator';
-import { Tabs, TabsList, TabsTrigger } from '@/Components/ui/tabs';
+import InvoiceTemplate from '@/components/InvoiceTemplate';
+import NotaTemplate3 from '@/components/nota/NotaTemplate3';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { cn } from '@/lib/utils';
 import { Currency } from '@/types';

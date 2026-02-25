@@ -7,7 +7,7 @@ import {
     CardHeader,
     CardTitle,
     CardDescription,
-} from '@/Components/ui/card';
+} from '@/components/ui/card';
 import {
     DollarSign,
     CircleDollarSign,

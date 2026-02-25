@@ -6,7 +6,7 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from '@/Components/ui/card';
+} from '@/components/ui/card';
 import {
     Command,
     CommandEmpty,
@@ -14,14 +14,14 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from '@/Components/ui/command';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
+} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from '@/Components/ui/popover';
+} from '@/components/ui/popover';
 import {
     Table,
     TableBody,
@@ -29,8 +29,8 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/Components/ui/table';
-import { Textarea } from '@/Components/ui/textarea';
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { cn } from '@/lib/utils';
 import { Currency, FinancialAccount, PageProps, User } from '@/types';

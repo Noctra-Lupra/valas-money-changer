@@ -8,7 +8,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/Components/ui/dialog"
+} from "@/components/ui/dialog"
 import { toast } from 'sonner';
 import { User } from '@/types';
 import { AlertTriangle } from 'lucide-react';

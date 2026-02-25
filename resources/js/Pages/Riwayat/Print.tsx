@@ -1,4 +1,4 @@
-import InvoiceTemplate, { Transaction } from '@/Components/InvoiceTemplate';
+import InvoiceTemplate, { Transaction } from '@/components/InvoiceTemplate';
 import { Head } from '@inertiajs/react';
 import { useEffect } from 'react';
 
