@@ -40,6 +40,12 @@ class FinancialAccountSeeder extends Seeder
                 'type' => 'mandiri2', 
                 'balance' => 0,
             ],
+            [
+                'account_name' => 'CASH(2)',
+                'account_number' => null,
+                'type' => 'cash2', 
+                'balance' => 0,
+            ],
         ];
 
         foreach ($accounts as $acc) {
