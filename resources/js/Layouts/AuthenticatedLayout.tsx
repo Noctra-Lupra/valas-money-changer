@@ -240,6 +240,17 @@ export default function AuthenticatedLayout({
                                                 );
                                             })}
                                         </div>
+                                        <div className="px-2 py-2 mt-auto border-t pt-4">
+                                            <Link
+                                                href={route('logout')}
+                                                method="post"
+                                                as="button"
+                                                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-red-600 transition-all hover:bg-red-50"
+                                            >
+                                                <LogOut className="h-4 w-4" />
+                                                Log Out
+                                            </Link>
+                                        </div>
                                     </div>
                                 </nav>
                             </SheetContent>
